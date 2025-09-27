@@ -1,0 +1,26 @@
+.edu-container {
+  padding: 48rpx 24rpx;
+}
+.qa-area {
+  margin-bottom: 32rpx;
+}
+input {
+  margin: 16rpx 0;
+  padding: 16rpx;
+  border-radius: 16rpx;
+  border: none;
+  background: #f7f7fa;
+  font-size: 32rpx;
+}
+button {
+  margin: 16rpx 8rpx;
+}
+.mentor-tip {
+  background: #e6f7ff;
+  color: #1890ff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 32rpx;
+  font-size: 28rpx;
+  text-align: center;
+}

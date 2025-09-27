@@ -1,0 +1,21 @@
+-- 初始化数据库结构
+CREATE DATABASE IF NOT EXISTS education_platform CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+USE education_platform;
+
+-- 示例用户表
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 示例课程表
+CREATE TABLE IF NOT EXISTS courses (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

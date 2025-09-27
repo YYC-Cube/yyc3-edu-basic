@@ -1,0 +1,5 @@
+<view wx:if="{{open}}" class="toast-container">
+  <view class="toast-content">
+    <text>{{content}}</text>
+  </view>
+</view>

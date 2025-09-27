@@ -1,0 +1,12 @@
+<view class="edu-container">
+  <view class="mentor-tip" wx:if="{{mentorTip}}">
+    <text>{{mentorTip}}</text>
+  </view>
+  <view class="qa-area">
+    <button type="primary" bindtap="startRecord">语音提问</button>
+    <button type="default" bindtap="stopRecord">结束录音</button>
+    <input type="text" placeholder="请输入问题" bindinput="onTextInput" />
+    <button type="primary" bindtap="submitText">提交问题</button>
+  </view>
+  <toast open="{{toastOpen}}" content="{{toastContent}}" userName="{{userName}}" mood="{{mood}}" voiceUrl="{{voiceUrl}}" />
+</view>
