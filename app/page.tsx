@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useEffect, useState, useRef } from "react"
+import Link from "next/link"
 import { Mic, Send, Download, Upload, X, Volume2, VolumeX, Square, Brain, Wand2, Shield, Gauge, Palette } from "lucide-react"
 import { AnimatedTextBlock } from "@/components/typewriter-effect"
 
@@ -16,6 +17,7 @@ import { useEducationAI } from "@/hooks/use-education-ai"
 import { ModelSelector } from "@/components/model-selector"
 import { GeometricAnimation } from "@/components/geometric-animation"
 import GlobalAuditDashboard from "@/components/global-audit-dashboard"
+import { VoiceSettingsDialog } from "@/components/voice-settings-dialog"
 import type { LocalModel } from "@/lib/local-models"
 
 type AppState = "splash" | "main"
@@ -58,6 +60,10 @@ export default function Dashboard() {
   const [voiceEnabled, setVoiceEnabled] = useState(true)
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
   const [audioChunks, setAudioChunks] = useState<Blob[]>([])
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false)
+  const [voice, setVoice] = useState<SpeechSynthesisVoice | null>(null)
+  const [rate, setRate] = useState(1)
+  const [pitch, setPitch] = useState(1)
 
   const { localModels, sendMessage: sendLocalMessage } = useLocalModels()
   const { subjects, askQuestion, analyzeLearningProgress } = useEducationAI()
@@ -169,8 +175,11 @@ export default function Dashboard() {
     speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.lang = "zh-CN"
-    utterance.rate = 0.9
-    utterance.pitch = 1
+    if (voice) {
+      utterance.voice = voice;
+    }
+    utterance.rate = rate;
+    utterance.pitch = pitch;
 
     utterance.onstart = () => setIsPlaying(true)
     utterance.onend = () => setIsPlaying(false)
@@ -215,8 +224,16 @@ export default function Dashboard() {
         if (splashElement) {
           splashElement.classList.add("animate-scale-out")
           setTimeout(() => {
-            setAppState("main")
-          }, 600)
+            setAppState("main");
+            setChatMessages([
+              {
+                type: "ai",
+                content: "👋 欢迎使用 YYC³ AI 智能教育中心！我是您的专属AI教育导师，已为您链接全域功能，请问有什么可以帮助您？",
+                timestamp: new Date(),
+                isAnimated: true,
+              },
+            ]);
+          }, 600);
         } else {
           setAppState("main")
         }
@@ -249,7 +266,6 @@ export default function Dashboard() {
     // AI响应逻辑
     setTimeout(() => {
       generateAIResponse(userInput).then((aiResponse) => {
-        // 如果是字符串，转换为对象格式
         const response = typeof aiResponse === "string" ? { content: aiResponse, isAnimated: true } : aiResponse
 
         setChatMessages((prev) => [
@@ -268,7 +284,7 @@ export default function Dashboard() {
               speakText(response.content)
             },
             response.content.length * 30 + 1000,
-          ) // 根据文本长度调整语音播放时机
+          )
         }
       })
     }, 1000)
@@ -309,7 +325,7 @@ export default function Dashboard() {
   }
 
   // 增强的AI响应生成
-  const generateAIResponse = async (input: string): Promise<string> => {
+  const generateAIResponse = async (input: string): Promise<{ content: string; isAnimated: boolean }> => {
     if (selectedModelType === "local" && selectedLocalModel) {
       try {
         const messages = [
@@ -321,13 +337,45 @@ export default function Dashboard() {
           { role: "user", content: input },
         ]
         const response = await sendLocalMessage(selectedLocalModel, messages)
-        return response
+        return { content: response, isAnimated: true };
       } catch (error) {
-        return `❌ 本地模型调用失败: ${error instanceof Error ? error.message : "未知错误"}\n\n请检查模型服务是否正常运行，或切换到云端模型。`
+        const errorMessage = `❌ 本地模型调用失败: ${error instanceof Error ? error.message : "未知错误"}\n\n请检查模型服务是否正常运行，或切换到云端模型。`;
+        return { content: errorMessage, isAnimated: false };
       }
     }
 
     const lowerInput = input.toLowerCase()
+
+    // 核心功能介绍
+    if (lowerInput.includes("可视化") || lowerInput.includes("编程")) {
+      return {
+        content: `🧠 **可视化编程平台**
+
+我们的可视化编程平台是一个强大的无代码/低代码工具，专为教育场景设计。您可以：
+
+- **拖拽生成应用**：像搭积木一样，通过拖拽预设的UI组件和逻辑模块，快速构建交互式应用和教学课件。
+- **实时代码预览**：在可视化搭建的同时，系统会实时生成对应的React、Vue代码，便于学习和理解。
+- **一键导出**：可以将您的作品导出为独立的前端项目代码。
+
+点击左下角的 **大脑图标** 🧠 即可进入体验！`,
+        isAnimated: true,
+      };
+    }
+
+    if (lowerInput.includes("审核") || lowerInput.includes("代码质量") || lowerInput.includes("安全")) {
+      return {
+        content: `🛡️ **全局智能审核系统**
+
+本应用集成了强大的全局智能审核系统，可以对项目进行全方位体检：
+
+- **五大审核维度**：覆盖代码质量、性能、安全性、可访问性和依赖项。
+- **智能评分和报告**：为每个维度打分，并生成详细的审核报告，指出具体问题和优化建议。
+- **一键修复（部分）**：对一些常见问题，系统可以尝试自动修复。
+
+点击左下角的 **盾牌图标** 🛡️ 即可启动全局审核。`,
+        isAnimated: true,
+      };
+    }
 
     // 教育AI智能体响应
     if (
@@ -347,23 +395,6 @@ export default function Dashboard() {
 • **几何专题** - 平面几何、立体几何、几何证明、几何变换  
 • **代数专题** - 方程不等式、函数图像、数列递推、多项式
 • **组合数学** - 排列组合、概率统计、图论基础、递推关系
-
-🎖️ **竞赛级别训练：**
-• **基础巩固** - 夯实数学基础，培养数学思维
-• **提高训练** - 掌握竞赛技巧，提升解题能力
-• **竞赛冲刺** - 真题模拟，名师指导，冲击奖项
-
-💡 **AI智能功能：**
-• **个性化题库** - 根据能力水平智能推送练习题
-• **解题思路启发** - AI导师逐步引导解题思路
-• **竞赛模拟训练** - 真实竞赛环境模拟体验
-• **名师视频讲解** - 顶级数学教师在线指导
-
-📊 **学习效果保障：**
-• 85%学生成绩显著提升
-• 60%学习效率大幅提高  
-• 95%用户满意度认可
-• 30天见效承诺
 
 🚀 **立即开始：**
 请告诉我您的年级和当前数学水平，我将为您制定专属的奥数竞赛训练计划！
@@ -386,18 +417,6 @@ export default function Dashboard() {
 • **英语** - 词汇积累、语法学习、听说训练、文化理解
 • **科学** - 物理化学生物、科学实验、创新思维
 • **艺术** - 绘画技巧、音乐欣赏、创意设计、美育熏陶
-
-🤖 **AI智能功能：**
-• **个性化学习路径** - 根据学生特点定制专属计划
-• **24小时智能答疑** - 全天候AI导师在线解答
-• **实时学情分析** - 动态评估学习进度和效果
-• **游戏化学习体验** - 寓教于乐，激发学习兴趣
-
-📈 **效果保障：**
-• 85%学生成绩显著提升
-• 60%学习效率大幅提高
-• 95%用户满意度认可  
-• 30天见效承诺
 
 🎯 **请告诉我：**
 • 您的年级和学习需求
@@ -422,11 +441,9 @@ export default function Dashboard() {
 • 分析学习进度和效果
 • 推荐适合的学习资源
 
-💡 **使用建议：**
-• 直接提出您的学习问题或需求
-• 告诉我您的年级和想学习的科目
-• 上传作业或试题，我来帮您解答
-• 使用语音功能，让学习更便捷
+💡 **您也可以试试问我：**
+• "如何使用可视化编程？"
+• "帮我审核一下项目代码。"
 
 请告诉我您想要学习什么，或者有什么问题需要解答？`,
       isAnimated: true,
@@ -444,7 +461,7 @@ export default function Dashboard() {
           <div className="mb-12 transform hover:scale-105 transition-transform duration-300">
             <div className="relative inline-block">
               <img
-                src="/yanyucloudcube-logo.webp"
+                src="/images/yanyucloudcube-logo.webp"
                 alt="YanYu Cloud Cube AI Logo"
                 className="h-40 w-40 mx-auto mb-8 drop-shadow-2xl transition duration-700 slow-pulse"
                 style={{ filter: 'drop-shadow(0 0 24px #60a5fa) brightness(1.08)' }}
@@ -460,7 +477,6 @@ export default function Dashboard() {
             <h2 className="text-2xl font-light text-blue-200 tracking-widest animate-fade-in-up animation-delay-300">
               万象归元于云枢 丨深栈智启新纪元
             </h2>
-            {/* 英文长标语及下方内容已删除 */}
           </div>
 
           {/* 交互提示区域 */}
@@ -503,7 +519,7 @@ export default function Dashboard() {
           <Dialog>
             <DialogTrigger asChild>
               <button className="focus:outline-none">
-                <img src="/yanyucloudcube-logo.webp" alt="设置" className="h-8 w-8 hover:scale-110 transition-transform" />
+                <img src="/images/yanyucloudcube-logo.webp" alt="设置" className="h-8 w-8 hover:scale-110 transition-transform" />
               </button>
             </DialogTrigger>
             <DialogContent className="max-w-lg">
@@ -553,68 +569,34 @@ export default function Dashboard() {
         <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full p-6 pt-16">
           {/* 聊天消息区域 */}
           <div className="flex-1 mb-6 space-y-4 overflow-y-auto max-h-[70vh] scroll-smooth">
-            {/* 交互页面中心内容已删除 */}
-
             {chatMessages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.type === "user" ? "justify-end" : "justify-start"} animate-fade-in`}
-              >
+              <div key={index} className={`flex items-start gap-3 ${message.type === "user" ? "justify-end" : ""}`}>
+                {message.type === "ai" && (
+                  <Avatar className="w-8 h-8 border-2 border-blue-400">
+                    <AvatarFallback className="bg-blue-500 text-white">AI</AvatarFallback>
+                  </Avatar>
+                )}
                 <div
-                  className={`max-w-[80%] ${
+                  className={`max-w-lg p-4 rounded-2xl shadow-md ${
                     message.type === "user"
-                      ? "bg-cyan-600/20 border border-cyan-500/30 backdrop-blur-sm"
-                      : message.type === "ai"
-                        ? "bg-slate-800/30 border border-slate-700/30 backdrop-blur-sm"
-                        : "bg-blue-600/20 border border-blue-500/30 backdrop-blur-sm"
-                  } rounded-2xl p-4 relative group shadow-lg`}
+                      ? "bg-blue-600/80 rounded-br-none"
+                      : "bg-slate-800/60 rounded-bl-none"
+                  }`}
                 >
-                  {message.type !== "user" && (
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center">
-                        <Avatar className="h-6 w-6 mr-2">
-                          <AvatarFallback className="bg-cyan-600 text-white text-xs">AI</AvatarFallback>
-                        </Avatar>
-                        <span className="text-xs text-cyan-300">YYC³ AI</span>
-                      </div>
-                      {message.type === "ai" && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => speakText(message.content)}
-                              >
-                                <Volume2 className="h-3 w-3" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>播放语音</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                    </div>
+                  {message.isAnimated && message.type === "ai" ? (
+                    <AnimatedTextBlock text={message.content} />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{message.content}</p>
                   )}
-                  <div className="text-slate-100 whitespace-pre-line">
-                    {message.type === "ai" && message.isAnimated ? (
-                      <AnimatedTextBlock
-                        text={message.content}
-                        speed={25}
-                        onComplete={() => {
-                          // 动画完成后的回调
-                        }}
-                      />
-                    ) : (
-                      message.content
-                    )}
-                  </div>
-                  <div className="text-xs text-slate-400 mt-2">
-                    {isMounted ? message.timestamp.toLocaleTimeString() : '--:--:--'}
+                  <div className="text-xs text-slate-400 mt-2 text-right">
+                    {message.timestamp.toLocaleTimeString()}
                   </div>
                 </div>
+                {message.type === "user" && (
+                  <Avatar className="w-8 h-8 border-2 border-slate-400">
+                    <AvatarFallback>YY</AvatarFallback>
+                  </Avatar>
+                )}
               </div>
             ))}
             <div ref={messagesEndRef} />
@@ -622,265 +604,148 @@ export default function Dashboard() {
 
           {/* 输入区域 */}
           <div className="relative">
-            {/* 智能功能提示 */}
             {showSuggestions && smartSuggestions.length > 0 && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 z-20">
-                <div className="bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-4 shadow-xl">
-                  <div className="flex items-center mb-3">
-                    <div className="text-lg mr-2">💡</div>
-                    <span className="text-sm text-slate-300">智能学习建议</span>
-                  </div>
-                  <div className="space-y-2">
-                    {smartSuggestions.map((suggestion, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleSuggestionClick(suggestion)}
-                        className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-700/50 hover:bg-slate-600/50 transition-colors text-left group"
-                      >
-                        <div className="flex items-center">
-                          <span className="text-xl mr-3">{suggestion.icon}</span>
-                          <div>
-                            <div className="text-sm text-slate-200 font-medium">{suggestion.title}</div>
-                            <div className="text-xs text-slate-400">{suggestion.description}</div>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              <div className="absolute bottom-full left-0 right-0 p-2 space-y-2">
+                {smartSuggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="w-full text-left p-3 bg-slate-700/50 backdrop-blur-md rounded-lg hover:bg-slate-600/70 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{suggestion.icon}</span>
+                      <div>
+                        <p className="font-semibold">{suggestion.title}</p>
+                        <p className="text-sm text-slate-300">{suggestion.description}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
               </div>
             )}
 
             <div className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/30 rounded-2xl p-4 shadow-lg">
-              {/* 上传文件显示 */}
-              {uploadedFiles.length > 0 && (
-                <div className="mb-3">
-                  <div className="text-sm text-slate-400 mb-2">已上传文件:</div>
-                  <div className="flex flex-wrap gap-2">
-                    {uploadedFiles.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-1 text-xs text-slate-300"
-                      >
-                        {file.name}
-                        <button
-                          onClick={() => setUploadedFiles((prev) => prev.filter((_, i) => i !== index))}
-                          className="ml-2 text-slate-500 hover:text-red-400"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center space-x-3">
-                {/* 文件操作按钮组 */}
-                <div className="flex items-center space-x-1">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-slate-400 hover:text-cyan-400 rounded-full"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <Upload className="h-5 w-5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>上传文件</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-slate-400 hover:text-green-400 rounded-full"
-                          onClick={handleDownload}
-                          disabled={chatMessages.length === 0}
-                        >
-                          <Download className="h-5 w-5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>下载聊天记录</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-slate-400 hover:text-blue-400 rounded-full"
-                          onClick={() => window.open('/visual-programming', '_blank')}
-                        >
-                          <Palette className="h-5 w-5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>可视化编程平台</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-slate-400 hover:text-purple-400 rounded-full"
-                            >
-                              <Gauge className="h-5 w-5" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle className="flex items-center space-x-2">
-                                <Shield className="h-5 w-5 text-purple-500" />
-                                <span>全局智能审核</span>
-                              </DialogTitle>
-                            </DialogHeader>
-                            <GlobalAuditDashboard />
-                          </DialogContent>
-                        </Dialog>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>全局智能审核</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-
-                <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileUpload} />
-
-                {/* 文本输入 */}
-                <div className="flex-1 relative">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={userInput}
-                    onChange={(e) => setUserInput(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                    placeholder="请输入您的学习问题或需求..."
-                    className="w-full bg-slate-700/30 border border-slate-600/30 rounded-xl px-4 py-3 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 backdrop-blur-sm"
-                  />
-                </div>
-
-                {/* 语音功能按钮组 */}
-                <div className="flex items-center space-x-1">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={`rounded-full ${
-                            isRecording
-                              ? "text-red-500 hover:text-red-400 animate-pulse"
-                              : "text-slate-400 hover:text-cyan-400"
-                          }`}
-                          onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
-                        >
-                          {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{isRecording ? "停止录音" : "语音输入"}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={`rounded-full ${
-                            isPlaying
-                              ? "text-green-500 hover:text-green-400"
-                              : voiceEnabled
-                                ? "text-slate-400 hover:text-cyan-400"
-                                : "text-slate-600 hover:text-slate-500"
-                          }`}
-                          onClick={() => {
-                            if (isPlaying) {
-                              stopSpeaking()
-                            } else {
-                              setVoiceEnabled(!voiceEnabled)
-                            }
-                          }}
-                        >
-                          {isPlaying ? (
-                            <VolumeX className="h-5 w-5" />
-                          ) : voiceEnabled ? (
-                            <Volume2 className="h-5 w-5" />
-                          ) : (
-                            <VolumeX className="h-5 w-5" />
-                          )}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{isPlaying ? "停止播放" : voiceEnabled ? "关闭语音输出" : "开启语音输出"}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-
-                {/* 发送按钮 */}
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!userInput.trim()}
-                  className="bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 rounded-xl px-6"
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  发送
+              <div className="flex items-center gap-4">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                  placeholder="请输入您的学习问题或需求..."
+                  className="flex-1 bg-transparent focus:outline-none placeholder-slate-400"
+                />
+                <Dialog open={showVoiceSettings} onOpenChange={setShowVoiceSettings}>
+                  <DialogTrigger asChild>
+                    <button onClick={() => setShowVoiceSettings(true)} className="focus:outline-none">
+                      {isRecording ? (
+                        <Mic className="h-5 w-5 text-red-500 animate-pulse" />
+                      ) : (
+                        <Mic className="h-5 w-5 text-slate-400 hover:text-white" />
+                      )}
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>语音设置</DialogTitle>
+                    </DialogHeader>
+                    <VoiceSettingsDialog
+                      open={showVoiceSettings}
+                      onOpenChange={setShowVoiceSettings}
+                      voice={voice}
+                      setVoice={setVoice}
+                      rate={rate}
+                      setRate={setRate}
+                      pitch={pitch}
+                      setPitch={setPitch}
+                    />
+                  </DialogContent>
+                </Dialog>
+                <button onClick={() => setVoiceEnabled(!voiceEnabled)} className="focus:outline-none">
+                  {voiceEnabled ? (
+                    <Volume2 className="h-5 w-5 text-slate-400 hover:text-white" />
+                  ) : (
+                    <VolumeX className="h-5 w-5 text-slate-500" />
+                  )}
+                </button>
+                <Button onClick={handleSendMessage} size="sm" className="rounded-full bg-blue-600 hover:bg-blue-500">
+                  <Send className="h-4 w-4" />
                 </Button>
               </div>
+              <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center gap-4">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button onClick={() => fileInputRef.current?.click()} className="focus:outline-none">
+                          <Upload className="h-5 w-5 text-slate-400 hover:text-white" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>上传文件</TooltipContent>
+                    </Tooltip>
+                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" multiple />
 
-              {/* 底部控制 */}
-              <div className="flex items-center justify-between mt-3 text-xs text-slate-500">
-                <div className="flex items-center space-x-2">
-                  <Brain className="h-3 w-3 text-cyan-500" />
-                  <Label htmlFor="chat-mode" className="text-xs text-slate-400">
-                    模式
-                  </Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button onClick={handleDownload} className="focus:outline-none">
+                          <Download className="h-5 w-5 text-slate-400 hover:text-white" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>下载对话</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link href="/visual-programming" passHref legacyBehavior>
+                          <a target="_blank" rel="noopener noreferrer">
+                            <Brain className="h-5 w-5 text-slate-400 hover:text-white" />
+                          </a>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>可视化编程平台</TooltipContent>
+                    </Tooltip>
+
+                    <Dialog>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <DialogTrigger asChild>
+                              <button className="focus:outline-none">
+                                <Shield className="h-5 w-5 text-slate-400 hover:text-white" />
+                              </button>
+                            </DialogTrigger>
+                          </TooltipTrigger>
+                          <TooltipContent>全局智能审核</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <DialogContent className="max-w-7xl h-[90vh]">
+                        <DialogHeader>
+                          <DialogTitle>全局智能审核</DialogTitle>
+                        </DialogHeader>
+                        <GlobalAuditDashboard />
+                      </DialogContent>
+                    </Dialog>
+                  </TooltipProvider>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="chat-mode" className="text-sm text-slate-400">快速回答</Label>
                   <Switch
                     id="chat-mode"
                     checked={chatMode === "deep"}
                     onCheckedChange={(checked) => setChatMode(checked ? "deep" : "fast")}
                   />
-                  <span className="text-xs text-slate-400">{chatMode === "deep" ? "深度分析" : "快速回答"}</span>
-                  {chatMode === "deep" && <Wand2 className="h-3 w-3 text-purple-500 animate-pulse" />}
+                  <Label htmlFor="chat-mode" className="text-sm text-slate-400">深度模式</Label>
                 </div>
-
-                <div className="flex items-center space-x-2">
-                  <ModelSelector
-                    value={selectedModel}
-                    onValueChange={setSelectedModel}
-                    onModelSelect={(model) => {
-                      setSelectedModelType(model.type)
-                      if (model.type === "local") {
-                        const localModel = localModels.find((m) => m.id === model.id)
-                        setSelectedLocalModel(localModel || null)
-                      }
-                    }}
-                  />
-                  <span className="text-xs text-slate-500">{isRecording ? "录音中..." : "按 Enter 发送消息"}</span>
+                <div className="flex items-center gap-2">
+                  <ModelSelector value={selectedModel} onValueChange={setSelectedModel} onModelSelect={(model) => {
+                    setSelectedModelType(model.type)
+                    if (model.type === "local") {
+                      const localModel = localModels.find((m) => m.id === model.id)
+                      setSelectedLocalModel(localModel || null)
+                    }
+                  }} />
                 </div>
+                <div className="text-xs text-slate-500">按 Enter 发送消息</div>
               </div>
             </div>
           </div>

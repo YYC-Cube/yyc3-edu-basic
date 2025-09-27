@@ -137,3 +137,55 @@ export class PromptMatcher {
 
 // 导出配置实例
 export const systemArchitecture = new PromptMatcher([])
+
+// src/core/module-system.tsx
+'use client';
+
+import React, { useState, useEffect, Suspense } from 'react';
+import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeleton';
+
+export enum ModuleId {
+  AUDIT = 'audit',
+  EMOTION = 'emotion',
+  VISUAL_EDITOR = 'visual-editor',
+  EDUCATION = 'education',
+  KNOWLEDGE = 'knowledge',
+}
+
+interface ModuleSystemProps {
+  activeModule: ModuleId;
+  children: React.ReactNode;
+}
+
+export function ModuleSystem({ activeModule, children }: ModuleSystemProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [renderedModule, setRenderedModule] = useState(activeModule);
+
+  useEffect(() => {
+    if (activeModule !== renderedModule) {
+      setIsLoading(true);
+      // 模拟网络和渲染延迟
+      const timer = setTimeout(() => {
+        setRenderedModule(activeModule);
+        setIsLoading(false);
+      }, 500); // 500ms 延迟
+      return () => clearTimeout(timer);
+    }
+  }, [activeModule, renderedModule]);
+
+  const getSkeleton = () => {
+    switch (renderedModule) {
+      case ModuleId.AUDIT:
+        return <DashboardSkeleton />;
+      // 为其他模块添加骨架屏...
+      default:
+        return <DashboardSkeleton />; // 默认骨架
+    }
+  };
+
+  const moduleToRender = React.Children.toArray(children).find(
+    (child) => React.isValidElement(child) && child.key === renderedModule
+  );
+
+  return isLoading ? getSkeleton() : <>{moduleToRender}</>;
+}

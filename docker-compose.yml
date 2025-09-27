@@ -3,7 +3,11 @@ version: '3.8'
 services:
   # 主应用服务
   education-platform:
-    build: .
+    build:
+      context: .
+      cache_from:
+        - yyc-nexus/yyc-ai-lan:latest
+    image: yyc-nexus/yyc-ai-lan:latest
     ports:
       - "3000:3000"
     environment:
@@ -54,8 +58,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
       - education-platform
     restart: unless-stopped

@@ -2,6 +2,8 @@
 
 import { create } from 'zustand'
 import { persist, subscribeWithSelector } from 'zustand/middleware'
+import { UISlice, createUISlice } from './slices/createUISlice';
+import { AccessibilitySlice, createAccessibilitySlice } from './slices/createAccessibilitySlice';
 
 // 1. 全局应用状态
 interface AppState {
@@ -47,8 +49,11 @@ interface AppActions {
   updateAccessibility: (settings: AccessibilitySettings) => void
 }
 
+// 将所有 Slice 类型合并
+export type AllSlices = UISlice & AccessibilitySlice;
+
 // 3. 创建状态管理器
-export const useAppStore = create<AppState & AppActions>()(
+export const useAppStore = create<AllSlices>()(
   subscribeWithSelector(
     persist(
       (set, get) => ({
