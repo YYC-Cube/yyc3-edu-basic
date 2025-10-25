@@ -2,11 +2,48 @@
 
 import { create } from 'zustand'
 import { persist, subscribeWithSelector } from 'zustand/middleware'
-import { UISlice, createUISlice } from './slices/createUISlice';
-import { AccessibilitySlice, createAccessibilitySlice } from './slices/createAccessibilitySlice';
+import { StateCreator } from 'zustand'
 
-// 1. 全局应用状态
-interface AppState {
+// 基础类型定义
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  // 其他用户属性
+}
+
+export interface EmotionData {
+  type: string;
+  intensity: number;
+  timestamp: number;
+  // 其他情感数据属性
+}
+
+export interface ContextData {
+  lightLevel?: string;
+  // 其他上下文属性
+}
+
+export interface InteractionRecord {
+  type: string;
+  timestamp: number;
+  data?: unknown;
+}
+
+export interface CourseData {
+  id: string;
+  name: string;
+  // 其他课程属性
+}
+
+export type ProgressData = Record<string, unknown>
+
+export type AdaptiveConfig = Record<string, unknown>
+
+export type AccessibilitySettings = Record<string, unknown>
+
+// 应用状态接口
+export interface AppState {
   // 用户状态
   user: UserProfile | null
   isAuthenticated: boolean
@@ -27,8 +64,8 @@ interface AppState {
   accessibility: AccessibilitySettings
 }
 
-// 2. Actions定义
-interface AppActions {
+// Actions定义
+export interface AppActions {
   // 用户操作
   setUser: (user: UserProfile) => void
   logout: () => void
@@ -49,63 +86,65 @@ interface AppActions {
   updateAccessibility: (settings: AccessibilitySettings) => void
 }
 
-// 将所有 Slice 类型合并
-export type AllSlices = UISlice & AccessibilitySlice;
+// 定义AllSlices类型
+export type AllSlices = AppState & AppActions;
 
-// 3. 创建状态管理器
+// 创建状态管理器
+const createAppStore: StateCreator<AllSlices> = (set, get) => ({
+  // 初始状态
+  user: null as UserProfile | null,
+  isAuthenticated: false,
+  currentEmotion: null as EmotionData | null,
+  contextAwareness: {} as ContextData,
+  interactionHistory: [] as InteractionRecord[],
+  currentCourse: null as CourseData | null,
+  learningProgress: {} as ProgressData,
+  adaptiveSettings: {} as AdaptiveConfig,
+  theme: 'auto' as 'light' | 'dark' | 'auto',
+  language: 'zh-CN',
+  accessibility: {} as AccessibilitySettings,
+
+  // Actions实现
+  setUser: (user: UserProfile) => set({ user, isAuthenticated: true }),
+  logout: () => set({ user: null, isAuthenticated: false }),
+  
+  updateEmotion: (emotion: EmotionData) => {
+    set({ currentEmotion: emotion })
+    // 触发相关副作用
+    get().addInteraction({
+      type: 'emotion_update',
+      timestamp: Date.now(),
+      data: emotion
+    })
+  },
+  
+  updateContext: (context: ContextData) => {
+    set({ contextAwareness: context })
+    // 自动适应UI/功能
+    if (context.lightLevel === '较暗') {
+      set({ theme: 'dark' })
+    }
+  },
+  
+  addInteraction: (interaction: InteractionRecord) => set((state) => ({
+    interactionHistory: [...state.interactionHistory.slice(-99), interaction]
+  })),
+  
+  setCourse: (course: CourseData) => set({ currentCourse: course }),
+  updateProgress: (progress: ProgressData) => set({ learningProgress: progress }),
+  updateAdaptiveSettings: (settings: AdaptiveConfig) => set({ adaptiveSettings: settings }),
+  
+  toggleTheme: () => set((state) => ({
+    theme: state.theme === 'light' ? 'dark' : 'light'
+  })),
+  setLanguage: (lang: string) => set({ language: lang }),
+  updateAccessibility: (settings: AccessibilitySettings) => set({ accessibility: settings })
+});
+
 export const useAppStore = create<AllSlices>()(
   subscribeWithSelector(
     persist(
-      (set, get) => ({
-        // 初始状态
-        user: null,
-        isAuthenticated: false,
-        currentEmotion: null,
-        contextAwareness: {} as ContextData,
-        interactionHistory: [],
-        currentCourse: null,
-        learningProgress: {} as ProgressData,
-        adaptiveSettings: {} as AdaptiveConfig,
-        theme: 'auto',
-        language: 'zh-CN',
-        accessibility: {} as AccessibilitySettings,
-
-        // Actions实现
-        setUser: (user) => set({ user, isAuthenticated: true }),
-        logout: () => set({ user: null, isAuthenticated: false }),
-        
-        updateEmotion: (emotion) => {
-          set({ currentEmotion: emotion })
-          // 触发相关副作用
-          get().addInteraction({
-            type: 'emotion_update',
-            timestamp: Date.now(),
-            data: emotion
-          })
-        },
-        
-        updateContext: (context) => {
-          set({ contextAwareness: context })
-          // 自动适应UI/功能
-          if (context.lightLevel === '较暗') {
-            set({ theme: 'dark' })
-          }
-        },
-        
-        addInteraction: (interaction) => set((state) => ({
-          interactionHistory: [...state.interactionHistory.slice(-99), interaction]
-        })),
-        
-        setCourse: (course) => set({ currentCourse: course }),
-        updateProgress: (progress) => set({ learningProgress: progress }),
-        updateAdaptiveSettings: (settings) => set({ adaptiveSettings: settings }),
-        
-        toggleTheme: () => set((state) => ({
-          theme: state.theme === 'light' ? 'dark' : 'light'
-        })),
-        setLanguage: (lang) => set({ language: lang }),
-        updateAccessibility: (settings) => set({ accessibility: settings })
-      }),
+      createAppStore,
       {
         name: 'yyc3-app-storage',
         partialize: (state) => ({

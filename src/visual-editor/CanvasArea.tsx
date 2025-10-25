@@ -1,9 +1,9 @@
-import React, { useRef } from "react"
-
+import React, { useRef } from 'react'
+import { CanvasItem } from './VisualEditor'
 export interface CanvasAreaProps {
-  canvasData: any[]
-  setCanvasData: (data: any[]) => void
-  onSelect?: (id: number) => void
+  canvasData: CanvasItem[]
+  setCanvasData: (data: CanvasItem[]) => void
+  onSelect?: (asset: CanvasItem) => void
 }
 
 export const CanvasArea: React.FC<CanvasAreaProps> = ({ canvasData, setCanvasData, ...props }) => {
@@ -87,12 +87,12 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ canvasData, setCanvasDat
 
 // 画布内可拖动/缩放/删除的组件
 const DraggableOnCanvas: React.FC<{
-  item: any
+  item: CanvasItem
   idx: number
   onDrag: (idx: number, dx: number, dy: number) => void
   onResize: (idx: number, dw: number, dh: number) => void
   onDelete: (idx: number) => void
-  onSelect?: (id: number) => void
+  onSelect?: (asset: CanvasItem) => void
 }> = ({ item, idx, onDrag, onResize, onDelete, onSelect }) => {
   const dragData = useRef<{ x: number; y: number } | null>(null)
   const resizeData = useRef<{ w: number; h: number } | null>(null)
@@ -141,7 +141,12 @@ const DraggableOnCanvas: React.FC<{
       className="absolute bg-blue-50 border shadow-md rounded flex items-center justify-center group cursor-pointer"
       style={{ left: item.x, top: item.y, width: item.width, height: item.height, userSelect: "none", transition: "box-shadow .2s" }}
       onMouseDown={handleMouseDown}
-      onClick={(e) => { e.stopPropagation(); onSelect && onSelect(item.id) }}
+      onClick={(e) => { 
+        e.stopPropagation(); 
+        if (onSelect) {
+          onSelect(item);
+        }
+      }}
     >
       <span className="pointer-events-none select-none text-blue-700 font-bold">{item.name}</span>
       {/* 缩放手柄 */}

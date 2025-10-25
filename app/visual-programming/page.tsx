@@ -1,6 +1,6 @@
 "use client";
 
-import VisualProgramming from "@/components/visual-programming";
+import { YYCVisualPlatform } from "@/components/visual-programming";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export default function VisualProgrammingPage() {
@@ -12,7 +12,7 @@ export default function VisualProgrammingPage() {
       disableTransitionOnChange
     >
       <div className="h-screen w-screen">
-        <VisualProgramming />
+        <YYCVisualPlatform />
       </div>
     </ThemeProvider>
   );

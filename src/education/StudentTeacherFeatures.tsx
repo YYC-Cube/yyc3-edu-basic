@@ -130,7 +130,7 @@ export const TeacherFeatures: React.FC<{
   educationLevel: string
   mode: '義教' | '高教'
 }> = ({ educationLevel, mode }) => {
-  const [classData, setClassData] = useState({
+  const [classData] = useState({
     totalStudents: 32,
     activeStudents: 28,
     averageProgress: 65,
@@ -140,7 +140,13 @@ export const TeacherFeatures: React.FC<{
   return (
     <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-6 mb-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-bold text-lg text-orange-700">👩‍🏫 教师管理面板</h3>
+        <div>
+          <h3 className="font-bold text-lg text-orange-700">👩‍🏫 教师管理面板</h3>
+          <div className="flex gap-2 mt-1">
+            <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-xs">模式: {mode}</span>
+            <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">阶段: {educationLevel}</span>
+          </div>
+        </div>
         <button className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">
           📊 生成报告
         </button>

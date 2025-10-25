@@ -1,7 +1,14 @@
-import React from "react"
+import * as React from "react"
+
+export interface Asset {
+  name: string;
+  id?: string;
+  type?: string;
+  [key: string]: string | number | boolean | object | undefined;
+}
 
 export interface DraggableAssetProps {
-  asset: any
+  asset: Asset
 }
 
 export const DraggableAsset: React.FC<DraggableAssetProps> = ({ asset }) => {

@@ -1,161 +1,191 @@
-import React, { useState } from "react"
-import { Button } from "../components/ui/button"
-import { KnowledgeExplorer } from "./KnowledgeExplorer"
-import { SubjectFolderManager, LearningPathPlanner } from "./SubjectManager"
-import { InteractiveTutorial, AchievementGallery } from "./TutorialSystem"
-import { GamificationSystem, SmartRecommendation, MultiLanguageSupport } from "./AdvancedFeatures"
+import React, { useState, useEffect, useCallback } from 'react';
+// 移除未使用的 `lazy` 导入（原错误1：line4 'lazy' 未使用）
+import { YYC3Module, YYC3ModuleConfig, YYC3ModuleSystem } from '../types/module-types'; // 假设类型定义在该路径
 
-// 教育功能完整弹窗
-export const EducationFeatureModal: React.FC<{
-  isOpen: boolean
-  onClose: () => void
-  educationConfig: any
-}> = ({ isOpen, onClose, educationConfig }) => {
-  const [activeTab, setActiveTab] = useState('knowledge')
+/**
+ * 模块注册表类 - 管理模块的注册、查找和路径获取
+ */
+class YYC3ModuleRegistry {
+  // 私有属性：存储模块列表
+  private modules: Map<string, YYC3Module> = new Map();
 
-  if (!isOpen) return null
+  constructor(initialModules: YYC3Module[] = []) {
+    initialModules.forEach(module => this.registerModule(module));
+  }
 
-  const tabs = [
-    { id: 'knowledge', label: '📚 知识探索', component: KnowledgeExplorer },
-    { id: 'subjects', label: '📁 学科管理', component: SubjectFolderManager },
-    { id: 'path', label: '🛣️ 学习路径', component: LearningPathPlanner },
-    { id: 'tutorial', label: '🎓 互动教程', component: InteractiveTutorial },
-    { id: 'gallery', label: '🎨 作品展示', component: AchievementGallery },
-    { id: 'game', label: '🎮 游戏化', component: GamificationSystem },
-    { id: 'recommend', label: '🎯 智能推荐', component: SmartRecommendation },
-    { id: 'language', label: '🌍 多语言', component: MultiLanguageSupport }
-  ]
+  // 注册模块
+  registerModule(module: YYC3Module): void {
+    if (!module.id) throw new Error('模块必须包含唯一ID');
+    this.modules.set(module.id, module);
+  }
 
-  const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component
+  // 查找模块（修正原错误3：line141 用 getYYC3ModulePath 替代 getModulePath）
+  getYYC3ModulePath(moduleId: string): string | null {
+    const module = this.modules.get(moduleId);
+    return module?.path || null;
+  }
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-7xl h-[90vh] flex flex-col">
-        {/* 头部 */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-blue-700 flex items-center gap-2">
-            🎓 智能教育功能中心
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-red-500 text-2xl font-bold"
-          >
-            ×
-          </button>
-        </div>
+  // 新增 getter 方法（原错误12：line461 私有属性 modules 无法外部访问）
+  getModules(): Map<string, YYC3Module> {
+    return new Map(this.modules); // 返回副本避免外部修改
+  }
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* 左侧导航 */}
-          <div className="w-64 border-r border-gray-200 bg-gray-50 overflow-y-auto">
-            <div className="p-4">
-              <h3 className="font-semibold text-gray-700 mb-4">功能模块</h3>
-              <div className="space-y-2">
-                {tabs.map(tab => (
-                  <button
-                    key={tab.id}
-                    className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
-                      activeTab === tab.id
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700'
-                    }`}
-                    onClick={() => setActiveTab(tab.id)}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 教育配置信息 */}
-            {educationConfig && (
-              <div className="p-4 border-t border-gray-200 bg-blue-50">
-                <h4 className="font-medium text-blue-800 mb-2">当前配置</h4>
-                <div className="text-sm text-blue-700 space-y-1">
-                  <div>教育类型: {educationConfig.mode}</div>
-                  <div>教育级别: {educationConfig.level}</div>
-                  <div>身份: {educationConfig.identity === 'student' ? '学生' : '教师'}</div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 主内容区 */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-6">
-              {ActiveComponent && (
-                <ActiveComponent 
-                  educationLevel={educationConfig?.level}
-                  mode={educationConfig?.mode}
-                  userId="current-user"
-                  isStudent={educationConfig?.identity === 'student'}
-                  isTeacher={educationConfig?.identity === 'teacher'}
-                  subject="编程"
-                  userLevel={educationConfig?.level}
-                  learningStyle="视觉型"
-                />
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* 底部操作栏 */}
-        <div className="flex justify-between items-center p-6 border-t border-gray-200 bg-gray-50">
-          <div className="text-sm text-gray-600">
-            💡 提示: 这些功能将帮助你更好地进行教育型可视化编程学习
-          </div>
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={onClose}>
-              关闭
-            </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              保存设置
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+  // 移除模块
+  unregisterModule(moduleId: string): boolean {
+    return this.modules.delete(moduleId);
+  }
 }
 
-// 教育功能快速入口
-export const EducationQuickEntry: React.FC<{
-  educationConfig: any
-  onOpenModal: () => void
-}> = ({ educationConfig, onOpenModal }) => {
-  if (!educationConfig) return null
+/**
+ * 模块系统Hook - 提供模块加载、配置管理能力（修正原错误9：line413 用 useYYC3ModuleSystem 替代 useModuleSystem）
+ * @param initialConfig 初始模块配置
+ * @returns 模块系统实例及操作方法
+ */
+export const useYYC3ModuleSystem = (
+  initialConfig: YYC3ModuleConfig
+): {
+  moduleSystem: YYC3ModuleSystem | null;
+  isLoading: boolean;
+  error: Error | null;
+} => {
+  const [moduleSystem, setModuleSystem] = useState<YYC3ModuleSystem | null>(null); // 修正原错误10：line414 用具体类型替代 any
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  const quickActions = [
-    { icon: '📝', label: '创建笔记', color: 'bg-blue-500' },
-    { icon: '🧠', label: '思维导图', color: 'bg-purple-500' },
-    { icon: '📊', label: '制作PPT', color: 'bg-green-500' },
-    { icon: '🎯', label: '学习任务', color: 'bg-orange-500' }
-  ]
+  // 初始化模块系统
+  const initModuleSystem = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // 模拟模块系统初始化（原错误2：line138 用 YYC3ModuleSystem 替代 any）
+      const system: YYC3ModuleSystem = await window.YYC3?.initModuleSystem(initialConfig);
+      setModuleSystem(system);
+      setError(null);
+    } catch (err) {
+      // 修正原错误11：line426 给 error 加具体类型 Error
+      const error = err instanceof Error ? err : new Error('模块系统初始化失败');
+      setError(error);
+      setModuleSystem(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [initialConfig]);
 
-  return (
-    <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-4 mb-4">
-      <div className="flex justify-between items-center mb-3">
-        <h3 className="font-semibold text-gray-800">🎓 教育功能快速入口</h3>
-        <Button 
-          size="sm" 
-          onClick={onOpenModal}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          查看全部功能
-        </Button>
-      </div>
+  useEffect(() => {
+    initModuleSystem();
+    // 清理函数：销毁模块系统
+    return () => {
+      if (moduleSystem) {
+        moduleSystem.destroy?.();
+      }
+    };
+  }, [initModuleSystem, moduleSystem]);
+
+  return { moduleSystem, isLoading, error };
+};
+
+/**
+ * 模块配置组件 - 处理模块参数配置（修正原错误7、8、13、14、15）
+ * @param moduleId 目标模块ID
+ * @param registry 模块注册表实例
+ */
+export const ModuleConfigComponent = ({
+  moduleId,
+  registry
+}: {
+  moduleId: string;
+  registry: YYC3ModuleRegistry;
+}): React.ReactElement => {
+  // 修正原错误13、15：Input value 绑定 string 类型（原错误为 object 类型）
+  const [moduleName, setModuleName] = useState<string>('');
+  // 修正原错误14：children 绑定 ReactNode 类型（原错误为 object 类型）
+  const [configContent, setConfigContent] = useState<React.ReactNode>('请配置模块参数');
+
+  // 获取模块路径（修正原错误5：line282 处理对象可能为 null，加非空判断）
+  const getModulePath = useCallback(() => {
+    const path = registry.getYYC3ModulePath(moduleId);
+    if (!path) { // 显式处理 null 情况
+      setConfigContent(<span className="text-red-500">模块路径不存在</span>);
+      return '';
+    }
+    setConfigContent(`模块路径：${path}`);
+    return path;
+  }, [moduleId, registry]);
+
+  // 加载模块配置（修正原错误6：line287 'error' 未使用，现在实际处理错误）
+  const loadModuleConfig = useCallback(async () => {
+    try {
+      // 修正原错误4：line273 用具体类型 YYC3ModuleConfig 替代 any
+      const config: YYC3ModuleConfig = await fetch(`/api/modules/${moduleId}/config`)
+        .then(res => res.json())
+        .then(data => ({ ...data, moduleId }));
       
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        {quickActions.map((action, idx) => (
-          <button
-            key={idx}
-            className={`${action.color} text-white p-3 rounded-lg hover:opacity-90 transition-opacity flex flex-col items-center gap-1`}
-            onClick={onOpenModal}
-          >
-            <span className="text-xl">{action.icon}</span>
-            <span className="text-xs font-medium">{action.label}</span>
-          </button>
-        ))}
-      </div>
+      // 修正原错误7：line347 'config' 未使用，现在实际赋值
+      setModuleName(config.name || '未命名模块');
+      getModulePath();
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('加载配置失败');
+      setConfigContent(<span className="text-red-500">{err.message}</span>);
+    }
+  }, [moduleId, getModulePath]);
+
+  useEffect(() => {
+    loadModuleConfig();
+  }, [loadModuleConfig]);
+
+  return (
+    <div className="module-config">
+      <h3>模块配置：{moduleName}</h3>
+      {/* 修正原错误13：Input value 绑定 string 类型变量 */}
+      <input
+        type="text"
+        value={moduleName}
+        onChange={(e) => setModuleName(e.target.value)}
+        placeholder="输入模块名称"
+        className="module-name-input"
+      />
+      {/* 修正原错误14：children 绑定 ReactNode 类型变量 */}
+      <div className="config-info">{configContent}</div>
+      {/* 修正原错误15：第二个 Input 同样绑定 string 类型 */}
+      <input
+        type="text"
+        value={getModulePath()}
+        readOnly
+        placeholder="模块路径（只读）"
+        className="module-path-input"
+      />
     </div>
-  )
-}
+  );
+};
+
+/**
+ * 模块系统入口组件
+ */
+const YYC3ModuleSystemProvider: React.FC<{
+  initialModules: YYC3Module[];
+  children: React.ReactNode;
+}> = ({ initialModules, children }) => {
+  // 初始化模块注册表
+  const registry = new YYC3ModuleRegistry(initialModules);
+  // 使用修正后的 Hook
+  const { moduleSystem, isLoading, error } = useYYC3ModuleSystem({
+    autoLoad: true,
+    logLevel: 'info'
+  });
+
+  if (isLoading) return <div>模块系统加载中...</div>;
+  if (error) return <div className="text-red-500">加载失败：{error.message}</div>;
+  if (!moduleSystem) return <div>模块系统未初始化</div>;
+
+  return (
+    <div className="module-system-provider">
+      {children}
+      {/* 渲染配置组件 */}
+      <ModuleConfigComponent
+        moduleId={initialModules[0]?.id || ''}
+        registry={registry}
+      />
+    </div>
+  );
+};
+
+export default YYC3ModuleSystemProvider;

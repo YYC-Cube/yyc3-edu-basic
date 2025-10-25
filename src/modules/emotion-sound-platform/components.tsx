@@ -1,8 +1,8 @@
 // YYC³ 情感声效交互平台 - React组件库
 // 提供完整的情感声效交互UI组件
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { motion } from 'framer-motion'
 import {
   Card,
   CardContent,
@@ -11,7 +11,6 @@ import {
   Slider,
   Switch,
   Button,
-  ButtonGroup,
   Chip,
   Avatar,
   LinearProgress,
@@ -19,7 +18,6 @@ import {
   Grid,
   Paper,
   IconButton,
-  Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -34,14 +32,8 @@ import {
   VolumeUp,
   VolumeOff,
   PlayArrow,
-  Stop,
   Settings,
-  Favorite,
   Psychology,
-  Tune,
-  GraphicEq,
-  Equalizer,
-  RecordVoiceOver,
   MoodBad,
   Mood,
   SentimentVeryDissatisfied,
@@ -541,7 +533,7 @@ export const YYC3EmotionSoundTester: React.FC = () => {
     timestamp: new Date()
   })
   
-  const handleEmotionChange = (key: keyof YYC3EmotionState, value: any) => {
+  const handleEmotionChange = (key: keyof YYC3EmotionState, value: number | string) => {
     setTestEmotion(prev => ({
       ...prev,
       [key]: value,

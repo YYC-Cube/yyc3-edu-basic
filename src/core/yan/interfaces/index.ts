@@ -12,7 +12,7 @@ export interface YYC3YanInput {
 
 // 输入输出接口
 export interface YYC3YanOutput {
-  processedContent: any
+  processedContent: unknown | string | ArrayBuffer | Blob
   type: YYC3InputType
   timestamp: Date
   processingTime: number
@@ -146,7 +146,7 @@ export interface YYC3ConnectivityInfo {
 export interface YYC3YanError {
   code: YYC3YanErrorCode
   message: string
-  details?: any
+  details?: unknown
   timestamp: Date
 }
 
@@ -177,7 +177,7 @@ export abstract class YYC3YanBase {
   
   // 通用方法：格式化输出
   protected formatOutput(
-    processedContent: any,
+    processedContent: unknown | string | ArrayBuffer | Blob,
     input: YYC3YanInput,
     processingTime: number,
     success: boolean = true,
@@ -197,7 +197,7 @@ export abstract class YYC3YanBase {
   protected createError(
     code: YYC3YanErrorCode,
     message: string,
-    details?: any
+    details?: unknown
   ): YYC3YanError {
     return {
       code,

@@ -1,7 +1,7 @@
 // YYC³ 核心架构 - 语(Yu)层接口定义  
 // 负责所有智能解析处理的标准化接口
 
-import { YYC3YanOutput } from '../yan/interfaces'
+import { YYC3YanOutput } from '../../yan/interfaces'
 
 // 基础解析输入接口
 export interface YYC3YuInput {
@@ -87,8 +87,8 @@ export enum YYC3EntityType {
 export interface YYC3EntityAttributes {
   category?: string
   subcategory?: string
-  properties?: Record<string, any>
-  metadata?: Record<string, any>
+  properties?: Record<string, unknown>
+  metadata?: Record<string, unknown>
 }
 
 // 链接数据
@@ -96,7 +96,7 @@ export interface YYC3LinkedData {
   source: string
   url?: string
   description?: string
-  additionalInfo?: Record<string, any>
+  additionalInfo?: Record<string, unknown>
 }
 
 // 情感分析结果
@@ -166,7 +166,7 @@ export interface YYC3IntentScore {
 // 意图参数
 export interface YYC3IntentParameter {
   name: string
-  value: any
+  value: unknown
   type: string
   required: boolean
   confidence: number
@@ -181,7 +181,7 @@ export interface YYC3Concept {
   confidence: number
   dbpediaUri?: string
   wikipediaUrl?: string
-  properties?: Record<string, any>
+  properties?: Record<string, unknown>
 }
 
 // 关系抽取结果
@@ -281,8 +281,8 @@ export interface YYC3UserFeedback {
 // 纠正信息
 export interface YYC3Correction {
   type: 'entity' | 'sentiment' | 'intent'
-  original: any
-  corrected: any
+  original: unknown
+  corrected: unknown
   reason?: string
 }
 
@@ -291,7 +291,7 @@ export interface YYC3CustomRule {
   id: string
   name: string
   type: 'pattern' | 'logic' | 'ml'
-  rule: any
+  rule: unknown | Record<string, unknown>
   priority: number
   enabled: boolean
 }
@@ -300,7 +300,7 @@ export interface YYC3CustomRule {
 export interface YYC3YuError {
   code: YYC3YuErrorCode
   message: string
-  details?: any
+  details?: unknown
   timestamp: Date
 }
 
@@ -358,7 +358,7 @@ export abstract class YYC3YuBase {
   protected createError(
     code: YYC3YuErrorCode,
     message: string,
-    details?: any
+    details?: unknown
   ): YYC3YuError {
     return {
       code,

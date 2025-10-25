@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from "react"
-import { Button } from "../components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import * as React from "react"
+import { useState } from "react"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
 
 // 学科分类管理器
 export const SubjectFolderManager: React.FC = () => {
@@ -51,7 +52,7 @@ export const SubjectFolderManager: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchTerm, setSearchTerm] = useState("")
 
-  const colorClasses = {
+  const colorClasses: Record<string, string> = {
     blue: "border-blue-200 bg-blue-50 text-blue-800",
     green: "border-green-200 bg-green-50 text-green-800",
     purple: "border-purple-200 bg-purple-50 text-purple-800",
@@ -230,11 +231,21 @@ export const LearningPathPlanner: React.FC<{
   subject: string
   level: string
 }> = ({ subject, level }) => {
-  const [currentPath, setCurrentPath] = useState<any[]>([])
+  // 定义路径项接口
+    interface PathItem {
+      id: number;
+      title: string;
+      desc: string;
+      difficulty: string;
+      time: string;
+    }
+    
+    const [currentPath, setCurrentPath] = useState<PathItem[]>([])
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
 
   const generateLearningPath = (subject: string, level: string) => {
-    const pathTemplates = {
+    // 学科知识路径模板
+    const pathTemplates: Record<string, Record<string, PathItem[]>> = {
       数学: {
         小学: [
           { id: 1, title: "数字认知", desc: "学习数字0-100", difficulty: "简单", time: "1周" },
@@ -262,7 +273,12 @@ export const LearningPathPlanner: React.FC<{
       }
     }
 
-    const path = pathTemplates[subject as keyof typeof pathTemplates]?.[level as any] || [
+    // 确保level是有效的键类型
+    const subjectData = pathTemplates[subject as keyof typeof pathTemplates];
+    // 定义有效级别类型
+    type ValidLevel = keyof typeof subjectData;
+    const validLevel = (Object.keys(subjectData) as ValidLevel[]).includes(level as ValidLevel) ? level as ValidLevel : 'beginner' as ValidLevel;
+    const path = subjectData?.[validLevel] || [
       { id: 1, title: "基础学习", desc: "掌握基本概念", difficulty: "简单", time: "2周" },
       { id: 2, title: "进阶练习", desc: "深入理解原理", difficulty: "中等", time: "3周" },
       { id: 3, title: "实践应用", desc: "解决实际问题", difficulty: "困难", time: "4周" }

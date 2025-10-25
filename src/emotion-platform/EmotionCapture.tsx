@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useRef } from 'react'
 import { Mic, Camera, Heart, Brain, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,14 +18,12 @@ interface EmotionCaptureProps {
   onEmotionDetected?: (emotion: EmotionData) => void
   enableVoice?: boolean
   enableVideo?: boolean
-  enableText?: boolean
 }
 
 export const EmotionCapture: React.FC<EmotionCaptureProps> = ({
   onEmotionDetected,
   enableVoice = true,
-  enableVideo = true,
-  enableText = true
+  enableVideo = true
 }) => {
   const [isCapturing, setIsCapturing] = useState(false)
   const [currentEmotion, setCurrentEmotion] = useState<EmotionData | null>(null)
@@ -60,6 +58,7 @@ export const EmotionCapture: React.FC<EmotionCaptureProps> = ({
         const stream = await navigator.mediaDevices.getUserMedia({ video: true })
         videoRef.current.srcObject = stream
       } catch (error) {
+        console.warn('Video setup failed:', error)
       }
     }
     

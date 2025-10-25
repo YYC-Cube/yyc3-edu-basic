@@ -107,20 +107,20 @@ export function ModelSelector({ value, onValueChange, onModelSelect }: ModelSele
     return <Cloud className="h-4 w-4 text-blue-500" />
   }
 
-  const getProviderBadge = (type: string, provider?: string) => {
-    if (type === "local") {
-      return (
-        <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
-          本地
-        </Badge>
-      )
-    }
-    return (
-      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-        云端
-      </Badge>
-    )
-  }
+  const getProviderBadge = (type: string) => {
+     if (type === "local") {
+       return (
+         <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+           本地
+         </Badge>
+       )
+     }
+     return (
+       <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+         云端
+       </Badge>
+     )
+   }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -197,7 +197,7 @@ export function ModelSelector({ value, onValueChange, onModelSelect }: ModelSele
                         <div className="flex-1">
                           <div className="flex items-center space-x-2">
                             <span className="font-medium">{model.name}</span>
-                            {getProviderBadge(model.type, model.provider)}
+                            {getProviderBadge(model.type)}
                             {model.modelSize && (
                               <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                                 {model.modelSize}

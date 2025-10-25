@@ -1,27 +1,5 @@
 // 系统架构配置 - 分层分类设计
 
-export interface PromptTemplate {
-  id: string
-  name: string
-  description: string
-  template: string
-  variables?: string[]
-  examples?: string[]
-}
-
-export interface FunctionModule {
-  id: string
-  name: string
-  description: string
-  layer: SystemLayer
-  category: FunctionCategory
-  complexity: ComplexityLevel
-  userRole: UserRole[]
-  prompts: PromptTemplate[]
-  keywords: string[]
-  subModules?: FunctionModule[]
-}
-
 // 系统分层定义
 export enum SystemLayer {
   CORE = "core", // 核心层 - 基础AI能力
@@ -57,6 +35,28 @@ export enum UserRole {
   ADMIN = "admin", // 管理员
 }
 
+export interface PromptTemplate {
+  id: string
+  name: string
+  description: string
+  template: string
+  variables?: string[]
+  examples?: string[]
+}
+
+export interface FunctionModule {
+  id: string
+  name: string
+  description: string
+  layer: SystemLayer
+  category: FunctionCategory
+  complexity: ComplexityLevel
+  userRole: UserRole[]
+  prompts: PromptTemplate[]
+  keywords: string[]
+  subModules?: FunctionModule[]
+}
+
 // 智能提示词匹配系统
 export class PromptMatcher {
   private modules: FunctionModule[]
@@ -66,7 +66,7 @@ export class PromptMatcher {
   }
 
   // 根据用户输入匹配最佳功能模块
-  matchModule(userInput: string, userRole: UserRole = UserRole.GENERAL): FunctionModule | null {
+  matchModule(userInput: string): FunctionModule | null {
     const lowerInput = userInput.toLowerCase()
 
     // 权重计算
@@ -77,15 +77,8 @@ export class PromptMatcher {
       const keywordMatches = module.keywords.filter((keyword) => lowerInput.includes(keyword.toLowerCase())).length
       score += keywordMatches * 10
 
-      // 用户角色匹配
-      if (module.userRole.includes(userRole)) {
-        score += 5
-      }
-
-      // 复杂度适配（普通用户偏好简单功能）
-      if (userRole === UserRole.GENERAL && module.complexity === ComplexityLevel.BASIC) {
-        score += 3
-      }
+      // 用户角色匹配移除，因为参数已移除
+      // 复杂度适配移除，因为参数已移除
 
       return { module, score }
     })
@@ -97,8 +90,8 @@ export class PromptMatcher {
   }
 
   // 获取智能建议
-  getSuggestions(userInput: string, userRole: UserRole = UserRole.GENERAL): any[] {
-    const suggestions: any[] = []
+  getSuggestions(userInput: string): Array<{title: string, description: string, icon: string, action: string}> {
+    const suggestions: Array<{title: string, description: string, icon: string, action: string}> = []
     const lowerInput = userInput.toLowerCase()
 
     // 创意相关建议
@@ -137,55 +130,3 @@ export class PromptMatcher {
 
 // 导出配置实例
 export const systemArchitecture = new PromptMatcher([])
-
-// src/core/module-system.tsx
-'use client';
-
-import React, { useState, useEffect, Suspense } from 'react';
-import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeleton';
-
-export enum ModuleId {
-  AUDIT = 'audit',
-  EMOTION = 'emotion',
-  VISUAL_EDITOR = 'visual-editor',
-  EDUCATION = 'education',
-  KNOWLEDGE = 'knowledge',
-}
-
-interface ModuleSystemProps {
-  activeModule: ModuleId;
-  children: React.ReactNode;
-}
-
-export function ModuleSystem({ activeModule, children }: ModuleSystemProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [renderedModule, setRenderedModule] = useState(activeModule);
-
-  useEffect(() => {
-    if (activeModule !== renderedModule) {
-      setIsLoading(true);
-      // 模拟网络和渲染延迟
-      const timer = setTimeout(() => {
-        setRenderedModule(activeModule);
-        setIsLoading(false);
-      }, 500); // 500ms 延迟
-      return () => clearTimeout(timer);
-    }
-  }, [activeModule, renderedModule]);
-
-  const getSkeleton = () => {
-    switch (renderedModule) {
-      case ModuleId.AUDIT:
-        return <DashboardSkeleton />;
-      // 为其他模块添加骨架屏...
-      default:
-        return <DashboardSkeleton />; // 默认骨架
-    }
-  };
-
-  const moduleToRender = React.Children.toArray(children).find(
-    (child) => React.isValidElement(child) && child.key === renderedModule
-  );
-
-  return isLoading ? getSkeleton() : <>{moduleToRender}</>;
-}

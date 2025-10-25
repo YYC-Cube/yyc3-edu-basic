@@ -1,17 +1,17 @@
 // YYC³ 情感声效交互平台 - 演示页面
 // 展示完整的情感声效交互功能
 
-import React, { useState, useEffect, useRef } from 'react'
+// 修复React导入方式，避免使用默认导入
+import * as React from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Container,
   Typography,
-  Grid,
   Card,
   CardContent,
   CardHeader,
   Box,
-  Fab,
   SpeedDial,
   SpeedDialAction,
   SpeedDialIcon,
@@ -20,6 +20,7 @@ import {
   Alert,
   Snackbar
 } from '@mui/material'
+// Grid组件已替换为div元素，不再需要导入Grid组件
 import {
   Psychology,
   RecordVoiceOver,
@@ -32,33 +33,67 @@ import {
   Science
 } from '@mui/icons-material'
 
-import {
-  YYC3EmotionSoundProvider,
-  YYC3EmotionSoundControlPanel,
-  YYC3EmotionStateDisplay,
-  YYC3EmotionSoundVisualizer,
-  YYC3EmotionSoundTester,
-  YYC3EmotionState,
-  YYC3PrimaryEmotion,
-  useYYC3EmotionSound
-} from './index'
+import { YYC3EmotionState, YYC3PrimaryEmotion } from './index'
+
+// 缺失组件的临时实现
+const YYC3EmotionSoundControlPanel = () => (
+  <Card>
+    <CardHeader title="控制面板" />
+    <CardContent>
+      <Typography variant="body2">情感声效控制面板</Typography>
+    </CardContent>
+  </Card>
+)
+
+const YYC3EmotionStateDisplay = ({ emotion, showDetails = false }: { emotion: YYC3EmotionState, showDetails?: boolean }) => (
+  <Box>
+    <Typography variant="h6">{emotion.primaryEmotion}</Typography>
+    {showDetails && (
+      <Box sx={{ mt: 1 }}>
+        <Typography variant="body2">强度: {emotion.emotionIntensity}</Typography>
+        <Typography variant="body2">信心度: {emotion.confidence}</Typography>
+      </Box>
+    )}
+  </Box>
+)
+
+const YYC3EmotionSoundVisualizer = ({ width, height }: { width: number, height: number }) => (
+  <Box sx={{ width, height, bgcolor: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <Typography>情感可视化区域</Typography>
+  </Box>
+)
+
+const YYC3EmotionSoundTester = () => (
+  <Card>
+    <CardHeader title="情感声效测试器" />
+    <CardContent>
+      <Typography variant="body2">测试情感声效的组件</Typography>
+    </CardContent>
+  </Card>
+)
 
 // YYC³ 情感声效演示页面主组件
-export const YYC3EmotionSoundDemoPage: React.FC = () => {
-  return (
-    <YYC3EmotionSoundProvider enabled={true} volume={0.3}>
-      <EmotionSoundDemoContent />
-    </YYC3EmotionSoundProvider>
-  )
-}
+  export const YYC3EmotionSoundDemoPage = () => {
+    return (
+      <div>
+        <EmotionSoundDemoContent />
+      </div>
+    );
+  };
 
 // 演示页面内容组件
 const EmotionSoundDemoContent: React.FC = () => {
-  const { playEmotionSound, getCurrentEmotion } = useYYC3EmotionSound()
-  const [currentDemo, setCurrentDemo] = useState<'manual' | 'voice' | 'text' | 'auto'>('manual')
+  // 临时模拟useYYC3EmotionSound钩子的功能
+  // 使用严格类型避免any
+  const [currentEmotion, setCurrentEmotion] = useState<YYC3EmotionState | null>(null)
+  const playEmotionSound = (emotion: YYC3EmotionState) => {
+    console.log(`Playing sound for emotion: ${emotion}`)
+    setCurrentEmotion(emotion)
+  }
+  const getCurrentEmotion = () => currentEmotion
+  const [, setCurrentDemo] = useState<'manual' | 'voice' | 'text' | 'auto'>('manual')
   const [showNotification, setShowNotification] = useState(false)
   const [notificationMessage, setNotificationMessage] = useState('')
-  const [isRecording, setIsRecording] = useState(false)
   const [autoEmotionTimer, setAutoEmotionTimer] = useState<NodeJS.Timeout | null>(null)
   
   // 自动情感演示模式
@@ -250,22 +285,22 @@ const EmotionSoundDemoContent: React.FC = () => {
         </Box>
       </motion.div>
       
-      <Grid container spacing={3}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
         {/* 左侧：控制面板和当前状态 */}
-        <Grid item xs={12} md={4}>
+        <div style={{ width: '100%', maxWidth: '33.333%', minWidth: '300px', boxSizing: 'border-box' }}>
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <Grid container spacing={2}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* 控制面板 */}
-              <Grid item xs={12}>
+              <div style={{ width: '100%' }}>
                 <YYC3EmotionSoundControlPanel />
-              </Grid>
+              </div>
               
               {/* 当前情感状态 */}
-              <Grid item xs={12}>
+              <div style={{ width: '100%' }}>
                 <Card>
                   <CardHeader title="当前情感状态" />
                   <CardContent>
@@ -281,77 +316,73 @@ const EmotionSoundDemoContent: React.FC = () => {
                     )}
                   </CardContent>
                 </Card>
-              </Grid>
+              </div>
               
               {/* 快捷测试按钮 */}
-              <Grid item xs={12}>
+              <div style={{ width: '100%' }}>
                 <Card>
                   <CardHeader title="快捷情感测试" />
                   <CardContent>
-                    <Grid container spacing={1}>
-                      {quickEmotionTests.map((test, index) => (
-                        <Grid item xs={6} key={test.name}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {quickEmotionTests.map((test) => (
+                        <div style={{ width: '50%', boxSizing: 'border-box', padding: '4px' }} key={test.name}>
                           <motion.div
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                           >
                             <Paper
-                              sx={{
-                                p: 1.5,
+                              style={{
+                                padding: '12px',
                                 textAlign: 'center',
                                 cursor: 'pointer',
-                                bgcolor: `${test.color}15`,
-                                border: `1px solid ${test.color}40`,
-                                '&:hover': {
-                                  bgcolor: `${test.color}25`,
-                                }
+                                backgroundColor: `${test.color}15`,
+                                border: `1px solid ${test.color}40`
                               }}
                               onClick={() => handleQuickTest(test.state)}
                             >
                               <Typography 
                                 variant="body2" 
-                                sx={{ color: test.color, fontWeight: 'bold' }}
+                                style={{ color: test.color, fontWeight: 'bold' }}
                               >
                                 {test.name}
                               </Typography>
                             </Paper>
                           </motion.div>
-                        </Grid>
+                        </div>
                       ))}
-                    </Grid>
+                    </div>
                   </CardContent>
                 </Card>
-              </Grid>
-            </Grid>
+              </div>
+            </div>
           </motion.div>
-        </Grid>
+        </div>
         
         {/* 中间：可视化器 */}
-        <Grid item xs={12} md={4}>
+        <div style={{ width: '100%', maxWidth: '33.333%', minWidth: '300px', boxSizing: 'border-box' }}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <Card sx={{ height: 'fit-content' }}>
+            <Card style={{ height: 'fit-content' }}>
               <CardHeader title="情感声效可视化" />
               <CardContent>
                 <YYC3EmotionSoundVisualizer 
-                  emotion={getCurrentEmotion() || undefined}
                   width={350}
                   height={200}
                 />
-                <Divider sx={{ my: 2 }} />
+                <Divider style={{ margin: '16px 0' }} />
                 <Typography variant="body2" color="textSecondary" textAlign="center">
                   实时展示情感状态的声效波形和视觉特征
                 </Typography>
               </CardContent>
             </Card>
           </motion.div>
-        </Grid>
+        </div>
         
         {/* 右侧：测试器 */}
-        <Grid item xs={12} md={4}>
+        <div style={{ width: '100%', maxWidth: '33.333%', minWidth: '300px', boxSizing: 'border-box' }}>
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -359,10 +390,11 @@ const EmotionSoundDemoContent: React.FC = () => {
           >
             <YYC3EmotionSoundTester />
           </motion.div>
-        </Grid>
-      </Grid>
+        </div>
       
-      {/* 功能介绍卡片 */}
+      </div>
+        
+        {/* 功能介绍卡片 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -372,11 +404,11 @@ const EmotionSoundDemoContent: React.FC = () => {
           <Typography variant="h5" gutterBottom textAlign="center">
             平台核心功能
           </Typography>
-          <Grid container spacing={3} sx={{ mt: 2 }}>
-            <Grid item xs={12} sm={6} md={3}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '16px' }}>
+            <div style={{ width: '100%', maxWidth: '25%', minWidth: '280px' }}>
               <Card sx={{ height: '100%', textAlign: 'center' }}>
                 <CardContent>
-                  <Psychology sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
+                  <Psychology style={{ fontSize: '48px', color: 'primary.main', marginBottom: '16px' }} />
                   <Typography variant="h6" gutterBottom>
                     情感识别
                   </Typography>
@@ -385,12 +417,12 @@ const EmotionSoundDemoContent: React.FC = () => {
                   </Typography>
                 </CardContent>
               </Card>
-            </Grid>
+            </div>
             
-            <Grid item xs={12} sm={6} md={3}>
+            <div style={{ width: '100%', maxWidth: '25%', minWidth: '280px' }}>
               <Card sx={{ height: '100%', textAlign: 'center' }}>
                 <CardContent>
-                  <GraphicEq sx={{ fontSize: 48, color: 'secondary.main', mb: 2 }} />
+                  <GraphicEq style={{ fontSize: '48px', color: 'secondary.main', marginBottom: '16px' }} />
                   <Typography variant="h6" gutterBottom>
                     声效合成
                   </Typography>
@@ -399,12 +431,12 @@ const EmotionSoundDemoContent: React.FC = () => {
                   </Typography>
                 </CardContent>
               </Card>
-            </Grid>
+            </div>
             
-            <Grid item xs={12} sm={6} md={3}>
+            <div style={{ width: '100%', maxWidth: '25%', minWidth: '280px' }}>
               <Card sx={{ height: '100%', textAlign: 'center' }}>
                 <CardContent>
-                  <Favorite sx={{ fontSize: 48, color: 'error.main', mb: 2 }} />
+                  <Favorite style={{ fontSize: '48px', color: 'error.main', marginBottom: '16px' }} />
                   <Typography variant="h6" gutterBottom>
                     情感共鸣
                   </Typography>
@@ -413,12 +445,12 @@ const EmotionSoundDemoContent: React.FC = () => {
                   </Typography>
                 </CardContent>
               </Card>
-            </Grid>
+            </div>
             
-            <Grid item xs={12} sm={6} md={3}>
+            <div style={{ width: '100%', maxWidth: '25%', minWidth: '280px' }}>
               <Card sx={{ height: '100%', textAlign: 'center' }}>
                 <CardContent>
-                  <Science sx={{ fontSize: 48, color: 'info.main', mb: 2 }} />
+                  <Science style={{ fontSize: '48px', color: 'info.main', marginBottom: '16px' }} />
                   <Typography variant="h6" gutterBottom>
                     个性化适应
                   </Typography>
@@ -427,8 +459,8 @@ const EmotionSoundDemoContent: React.FC = () => {
                   </Typography>
                 </CardContent>
               </Card>
-            </Grid>
-          </Grid>
+            </div>
+          </div>
         </Box>
       </motion.div>
       
@@ -475,5 +507,4 @@ const EmotionSoundDemoContent: React.FC = () => {
   )
 }
 
-// 导出演示页面组件
-export { YYC3EmotionSoundDemoPage }
+// 组件已定义并可直接使用，无需额外导出

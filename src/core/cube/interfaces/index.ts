@@ -1,10 +1,6 @@
 // YYC³ 核心架构 - 立方³(Cube)层接口定义
 // 负责模块管理、工作流编排、系统集成的标准化接口
 
-import { YYC3YanInput, YYC3YanOutput } from '../yan/interfaces'
-import { YYC3YuInput, YYC3YuOutput } from '../yu/interfaces'
-import { YYC3CloudResponse, YYC3CloudClient } from '../cloud/interfaces'
-
 // 立方³模块接口
 export interface YYC3CubeModule {
   // 模块元信息
@@ -81,7 +77,7 @@ export interface YYC3ModuleConfig {
   // 配置参数
   parameters: Record<string, YYC3ConfigParameter>
   // 覆盖设置
-  overrides?: Record<string, any>
+  overrides?: Record<string, unknown>
 }
 
 // 模块环境
@@ -111,11 +107,11 @@ export interface YYC3ResourceLimit {
 // 配置参数
 export interface YYC3ConfigParameter {
   type: 'string' | 'number' | 'boolean' | 'object' | 'array'
-  default: any
+  default: unknown
   required: boolean
   description: string
   validation?: YYC3ParameterValidation
-  options?: any[]
+  options?: unknown[]
 }
 
 // 参数验证
@@ -125,7 +121,7 @@ export interface YYC3ParameterValidation {
   max?: number
   minLength?: number
   maxLength?: number
-  enum?: any[]
+  enum?: unknown[]
   custom?: string  // 自定义验证函数名
 }
 
@@ -215,7 +211,7 @@ export interface YYC3ModuleError {
   message: string
   timestamp: Date
   stack?: string
-  context?: any
+  context?: unknown
 }
 
 // 工作流定义接口
@@ -260,14 +256,14 @@ export interface YYC3TriggerConfig {
   schedule?: string     // cron表达式
   event?: string       // 事件类型
   endpoint?: string    // API端点
-  parameters?: Record<string, any>
+  parameters?: Record<string, unknown>
 }
 
 // 触发条件
 export interface YYC3TriggerCondition {
   field: string
   operator: '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in' | 'contains'
-  value: any
+  value: unknown
 }
 
 // 工作流步骤
@@ -313,12 +309,12 @@ export interface YYC3StepOutput {
 export interface YYC3DataTransformation {
   type: 'jq' | 'jsonpath' | 'custom'
   expression: string
-  parameters?: Record<string, any>
+  parameters?: Record<string, unknown>
 }
 
 // 输出验证
 export interface YYC3OutputValidation {
-  schema?: any  // JSON Schema
+  schema?: unknown  // JSON Schema
   rules?: YYC3ValidationRule[]
 }
 
@@ -327,7 +323,7 @@ export interface YYC3ValidationRule {
   field: string
   type: string
   required: boolean
-  constraints?: Record<string, any>
+  constraints?: Record<string, unknown>
 }
 
 // 步骤条件
@@ -346,7 +342,7 @@ export interface YYC3ErrorHandling {
 // 错误动作
 export interface YYC3ErrorAction {
   type: 'log' | 'notify' | 'execute' | 'rollback'
-  config: Record<string, any>
+  config: Record<string, unknown>
 }
 
 // 通知配置
@@ -373,10 +369,10 @@ export interface YYC3WorkflowExecution {
   startTime: Date
   endTime?: Date
   duration?: number
-  result?: any
+  result?: unknown
   error?: YYC3ExecutionError
   steps: YYC3StepExecution[]
-  context: Record<string, any>
+  context: Record<string, unknown>
 }
 
 // 执行状态
@@ -394,7 +390,7 @@ export interface YYC3ExecutionError {
   stepId?: string
   code: string
   message: string
-  details?: any
+  details?: unknown
   timestamp: Date
 }
 
@@ -405,8 +401,8 @@ export interface YYC3StepExecution {
   startTime: Date
   endTime?: Date
   duration?: number
-  input?: any
-  output?: any
+  input?: unknown
+  output?: unknown
   error?: YYC3ExecutionError
   attempts: number
 }
@@ -445,7 +441,7 @@ export interface YYC3WorkflowLog {
   message: string
   executionId?: string
   stepId?: string
-  context?: any
+  context?: unknown
 }
 
 // 系统集成接口
@@ -542,7 +538,7 @@ export interface YYC3DataTarget {
 export interface YYC3MappingTransformation {
   type: 'none' | 'format' | 'calculate' | 'lookup' | 'custom'
   expression?: string
-  parameters?: Record<string, any>
+  parameters?: Record<string, unknown>
 }
 
 // 映射验证
@@ -551,7 +547,7 @@ export interface YYC3MappingValidation {
   type?: string
   pattern?: string
   range?: [number, number]
-  options?: any[]
+  options?: unknown[]
 }
 
 // 同步规则
@@ -575,7 +571,7 @@ export interface YYC3SyncFilter {
 export interface YYC3FilterCondition {
   field: string
   operator: string
-  value: any
+  value: unknown
   caseSensitive?: boolean
 }
 
@@ -592,7 +588,7 @@ export interface YYC3HealthCheckConfig {
   interval: number  // seconds
   timeout: number   // seconds
   endpoint?: string
-  expectedResponse?: any
+  expectedResponse?: unknown
 }
 
 // 集成指标
@@ -628,7 +624,7 @@ export abstract class YYC3CubeManager {
   
   // 抽象方法：工作流管理
   abstract createWorkflow(definition: YYC3WorkflowDefinition): Promise<string>
-  abstract executeWorkflow(workflowId: string, input?: any): Promise<YYC3WorkflowExecution>
+  abstract executeWorkflow(workflowId: string, input?: unknown): Promise<YYC3WorkflowExecution>
   abstract stopWorkflow(executionId: string): Promise<boolean>
   abstract getWorkflowStatus(executionId: string): Promise<YYC3WorkflowExecution>
   

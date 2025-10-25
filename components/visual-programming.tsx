@@ -9,16 +9,16 @@ interface VisualProject {
   id: string
   name: string
   version: string
-  nodes: any[]
-  edges: any[]
-  metadata: Record<string, any>
+  nodes: unknown[]
+  edges: unknown[]
+  metadata: Record<string, unknown>
 }
 
 interface CompileResult {
   code: string
-  errors: any[]
-  warnings: any[]
-  metrics: any
+  errors: unknown[]
+  warnings: unknown[]
+  metrics: unknown
 }
 
 export interface UserProfile {
@@ -45,7 +45,7 @@ export interface YYCVisualPlatformProps {
   // 回调函数
   onProjectSave?: (project: VisualProject) => void
   onCodeGenerate?: (result: CompileResult) => void
-  onEducationProgress?: (progress: any) => void
+  onEducationProgress?: (progress: unknown) => void
   
   // 样式和国际化
   theme?: 'light' | 'dark'
@@ -93,7 +93,6 @@ export function YYCVisualPlatform({
   currentUser,
   onProjectSave,
   onCodeGenerate,
-  onEducationProgress,
   theme = 'light',
   className = '',
   locale = 'zh-CN'

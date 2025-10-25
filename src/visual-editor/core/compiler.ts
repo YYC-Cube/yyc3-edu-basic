@@ -4,7 +4,7 @@
  */
 
 import * as Babel from '@babel/standalone'
-import { VisualProject, VisualNode, VisualEdge } from './engine'
+import { VisualProject, VisualNode } from './engine'
 
 export interface CompileOptions {
   framework: 'react' | 'vue' | 'vanilla'
@@ -136,10 +136,10 @@ export class CodeCompiler {
     this.validateCyclicDependencies(warnings, errors)
     
     // 验证数据流
-    this.validateDataFlow(warnings, errors)
+    this.validateDataFlow(warnings)
     
     // 验证组件兼容性
-    this.validateComponentCompatibility(warnings, errors)
+    this.validateComponentCompatibility(warnings)
   }
 
   private validateNodeConnections(warnings: CompileWarning[], errors: CompileError[]): void {
@@ -219,7 +219,7 @@ export class CodeCompiler {
     }
   }
 
-  private validateDataFlow(warnings: CompileWarning[], errors: CompileError[]): void {
+  private validateDataFlow(warnings: CompileWarning[]): void {
     // 检查必需输入是否已连接
     for (const node of this.project.nodes) {
       for (const input of node.inputs) {
@@ -259,7 +259,7 @@ export class CodeCompiler {
     }
   }
 
-  private validateComponentCompatibility(warnings: CompileWarning[], errors: CompileError[]): void {
+  private validateComponentCompatibility(warnings: CompileWarning[]): void {
     const framework = this.options.framework
     
     for (const node of this.project.nodes) {
@@ -869,8 +869,8 @@ export default {
     return str.replace(/(?:^|[\s-_])(\w)/g, (_, char) => char.toUpperCase())
   }
 
-  private extractStateFields(): Array<{name: string, type: string, defaultValue: any}> {
-    const fields: Array<{name: string, type: string, defaultValue: any}> = []
+  private extractStateFields(): Array<{name: string, type: string, defaultValue: string | number | boolean | object | null | undefined}> {
+    const fields: Array<{name: string, type: string, defaultValue: string | number | boolean | object | null | undefined}> = []
     
     for (const node of this.project.nodes) {
       Object.entries(node.properties).forEach(([key, value]) => {

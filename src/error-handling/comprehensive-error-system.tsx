@@ -194,72 +194,61 @@ export class NetworkErrorHandler {
 // 3. 用户反馈组件
 interface ErrorFeedbackProps {
   error?: Error
-  onFeedbackSubmit?: (feedback: string) => void
+  onFeedbackSubmit?: (反馈: string) => void
 }
 
 export function ErrorFeedback({ error, onFeedbackSubmit }: ErrorFeedbackProps) {
   const [feedback, setFeedback] = React.useState('')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
-  const [isSubmitted, setIsSubmitted] = React.useState(false)
 
   const handleSubmit = async () => {
     if (!feedback.trim()) return
-    
     setIsSubmitting(true)
-    
+
     try {
-      await fetch('/api/error-feedback', {
+      await fetch('/api/user-feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           feedback,
           error: error?.message,
-          timestamp: new Date().toISOString(),
-          url: window.location.href
+          timestamp: new Date().toISOString()
         })
       })
-      
-      setIsSubmitted(true)
+
       onFeedbackSubmit?.(feedback)
+      setFeedback('')
+
     } catch (err) {
       console.error('反馈提交失败:', err)
+
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  if (isSubmitted) {
-    return (
-      <Card className="mt-4">
-        <CardContent className="pt-4">
-          <p className="text-sm text-green-600">
-            ✅ 感谢您的反馈！我们会尽快处理这个问题。
-          </p>
-        </CardContent>
-      </Card>
-    )
-  }
-
   return (
     <Card className="mt-4">
       <CardHeader>
-        <CardTitle className="text-sm">帮助我们改进</CardTitle>
+        <CardTitle>问题反馈</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <textarea
-          value={feedback}
-          onChange={(e) => setFeedback(e.target.value)}
-          placeholder="请描述您遇到的问题或操作步骤..."
-          className="w-full p-2 border rounded text-sm min-h-[80px] resize-none"
-        />
-        <Button 
-          onClick={handleSubmit}
-          disabled={!feedback.trim() || isSubmitting}
-          size="sm"
-          className="w-full"
-        >
-          {isSubmitting ? '提交中...' : '发送反馈'}
-        </Button>
+      <CardContent>
+        <div className="space-y-4">
+          <textarea
+            className="w-full border rounded p-2 text-sm"
+            rows={4}
+            placeholder="请描述你遇到的问题..."
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+          />
+
+          <Button 
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? '提交中...' : '发送反馈'}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )
@@ -304,7 +293,7 @@ export class PerformanceMonitor {
   }
 
   // 监控组件渲染性能
-  measureComponentRender<T extends React.ComponentType<any>>(
+  measureComponentRender<T extends React.ComponentType<unknown>>(
     Component: T,
     componentName: string
   ): T {
@@ -348,7 +337,7 @@ export function useApiCall<T>(
       performanceMonitor.startTiming(`api_call_${url}`)
       const response = await networkErrorHandler.fetchWithRetry(url, options)
       const result = await response.json()
-      setData(result)
+      setData(result as T)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '请求失败'
       setError(errorMessage)

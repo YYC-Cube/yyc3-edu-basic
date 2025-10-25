@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: education-platform-svc
+  namespace: education-platform
+  labels:
+    app: education-platform
+spec:
+  type: ClusterIP
+  selector:
+    app: education-platform
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000

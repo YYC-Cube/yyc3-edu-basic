@@ -13,7 +13,7 @@ export interface AccessibilitySlice {
   updateAccessibility: (newSettings: Partial<AccessibilityState>) => void;
 }
 
-export const createAccessibilitySlice: StateCreator<AllSlices, [], [], AccessibilitySlice> = (set, get) => ({
+export const createAccessibilitySlice: StateCreator<AllSlices, [], [], AccessibilitySlice> = (set) => ({
   accessibility: {
     fontSize: 16,
     highContrast: false,

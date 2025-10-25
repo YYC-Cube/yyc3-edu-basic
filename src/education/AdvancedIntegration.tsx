@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react"
-import { Button } from "../components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 // AI智能编程助手
 export const AICodeAssistant: React.FC<{
@@ -62,6 +62,7 @@ export const AICodeAssistant: React.FC<{
       } else if (analysis.improvements.length > 0) {
         setCurrentTip(`💡 ${analysis.improvements[0]}`)
       }
+      setSuggestions([...(analysis.errors || []), ...(analysis.improvements || [])])
     }
   }, [currentCode, isActive, analyzeCode])
 
@@ -101,6 +102,20 @@ export const AICodeAssistant: React.FC<{
               📐 优化布局
             </Button>
           </div>
+
+          {/* 建议列表 */}
+          {suggestions.length > 0 && (
+            <div className="bg-white rounded-lg p-3">
+              <h4 className="font-medium text-gray-800 mb-2">建议列表</h4>
+              <div className="flex flex-wrap gap-2">
+                {suggestions.map((s, i) => (
+                  <Button key={i} size="sm" variant="outline" onClick={() => onSuggestion(s)}>
+                    {s}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -113,9 +128,9 @@ export const RealTimeCollaboration: React.FC<{
   userId: string
   userRole: 'student' | 'teacher'
 }> = ({ roomId, userId, userRole }) => {
-  const [collaborators, setCollaborators] = useState<any[]>([])
+  const [collaborators, setCollaborators] = useState<{ id: string; name: string; role: 'student' | 'teacher'; status: 'active' | 'idle' | 'offline'; cursor: { x: number; y: number } }[]>([])
   const [isConnected, setIsConnected] = useState(false)
-  const [messages, setMessages] = useState<any[]>([])
+  const [messages, setMessages] = useState<{ id: number; userId: string; message: string; timestamp: string }[]>([])
 
   // 模拟协作者状态
   useEffect(() => {
@@ -143,7 +158,7 @@ export const RealTimeCollaboration: React.FC<{
           🤝 实时协作
           <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
         </h3>
-        <span className="text-sm text-gray-500">{collaborators.length} 人在线</span>
+        <span className="text-sm text-gray-500">{collaborators.length} 人在线 · 房间 {roomId} · 身份 {userRole}</span>
       </div>
 
       {/* 协作者列表 */}
@@ -190,7 +205,7 @@ export const ProgressVisualization: React.FC<{
   userId: string
   timeRange: 'week' | 'month' | 'year'
 }> = ({ userId, timeRange }) => {
-  const [progressData, setProgressData] = useState({
+  const [progressData] = useState({
     studyTime: { thisWeek: 180, lastWeek: 150 }, // 分钟
     skillLevels: {
       '拖拽操作': 85,
@@ -211,6 +226,7 @@ export const ProgressVisualization: React.FC<{
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           📊 学习进度可视化
+          <span className="text-xs text-gray-500">用户 {userId} · 时间范围 {timeRange}</span>
         </CardTitle>
       </CardHeader>
       <CardContent>

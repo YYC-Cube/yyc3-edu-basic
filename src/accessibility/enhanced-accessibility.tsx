@@ -28,6 +28,9 @@ export function useKeyboardNavigation() {
           focusableArray[nextIndex]?.focus()
         }
         
+        // 记录当前焦点元素
+        focusedElement.current = document.activeElement as HTMLElement
+        
         e.preventDefault()
       }
       
@@ -49,9 +52,18 @@ export function useKeyboardNavigation() {
         }
       }
     }
+
+    // 记录焦点变化
+    const handleFocusIn = (e: FocusEvent) => {
+      focusedElement.current = e.target as HTMLElement
+    }
     
     document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
+    document.addEventListener('focusin', handleFocusIn)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('focusin', handleFocusIn)
+    }
   }, [])
 }
 
@@ -95,99 +107,40 @@ export function useFontSizeControl() {
   const { accessibility, updateAccessibility } = useAppStore()
   
   const increaseFontSize = () => {
-    const newSize = Math.min((accessibility.fontSize || 16) + 2, 24)
+    const newSize = Math.min(accessibility.fontSize + 1, 24)
     updateAccessibility({ ...accessibility, fontSize: newSize })
-    document.documentElement.style.fontSize = `${newSize}px`
   }
   
   const decreaseFontSize = () => {
-    const newSize = Math.max((accessibility.fontSize || 16) - 2, 12)
+    const newSize = Math.max(accessibility.fontSize - 1, 12)
     updateAccessibility({ ...accessibility, fontSize: newSize })
-    document.documentElement.style.fontSize = `${newSize}px`
   }
   
   const resetFontSize = () => {
     updateAccessibility({ ...accessibility, fontSize: 16 })
-    document.documentElement.style.fontSize = '16px'
   }
   
   return { increaseFontSize, decreaseFontSize, resetFontSize }
 }
 
-// 5. 动效控制
-export function useMotionPreferences() {
-  const { accessibility, updateAccessibility } = useAppStore()
-  
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-    
-    const handleChange = () => {
-      updateAccessibility({
-        ...accessibility,
-        reducedMotion: mediaQuery.matches
-      })
-      
-      if (mediaQuery.matches) {
-        document.documentElement.style.setProperty('--animation-duration', '0.01s')
-        document.documentElement.style.setProperty('--transition-duration', '0.01s')
-      } else {
-        document.documentElement.style.removeProperty('--animation-duration')
-        document.documentElement.style.removeProperty('--transition-duration')
-      }
-    }
-    
-    handleChange()
-    mediaQuery.addEventListener('change', handleChange)
-    
-    return () => mediaQuery.removeEventListener('change', handleChange)
-  }, [accessibility, updateAccessibility])
+// 5. 可访问性属性辅助
+export function withAccessibilityProps<T extends HTMLElement>(element: T, role?: string) {
+  if (role) {
+    element.setAttribute('role', role)
+  }
+  element.setAttribute('tabindex', '0')
+  element.setAttribute('aria-label', element.getAttribute('aria-label') || '可交互元素')
+  return element
 }
 
-// 6. ARIA标签增强组件
-interface AccessibleComponentProps {
-  children: React.ReactNode
-  label?: string
-  description?: string
-  role?: string
-  expanded?: boolean
-  level?: number
-}
-
-export function AccessibleComponent({
-  children,
-  label,
-  description,
-  role,
-  expanded,
-  level,
-  ...props
-}: AccessibleComponentProps & React.HTMLAttributes<HTMLDivElement>) {
-  const labelId = `label-${Math.random().toString(36).substr(2, 9)}`
-  const descriptionId = `desc-${Math.random().toString(36).substr(2, 9)}`
-  
-  return (
-    <div
-      role={role}
-      aria-label={label}
-      aria-labelledby={label ? labelId : undefined}
-      aria-describedby={description ? descriptionId : undefined}
-      aria-expanded={expanded}
-      aria-level={level}
-      {...props}
-    >
-      {label && (
-        <div id={labelId} className="sr-only">
-          {label}
-        </div>
-      )}
-      {description && (
-        <div id={descriptionId} className="sr-only">
-          {description}
-        </div>
-      )}
-      {children}
-    </div>
-  )
+// 6. 高对比度应用辅助
+export function applyHighContrast(enabled: boolean) {
+  const root = document.documentElement
+  if (enabled) {
+    root.classList.add('high-contrast')
+  } else {
+    root.classList.remove('high-contrast')
+  }
 }
 
 // 7. 无障碍工具栏

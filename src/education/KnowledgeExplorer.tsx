@@ -1,4 +1,5 @@
 import React, { useState } from "react"
+import { useEducationAI } from "@/hooks/use-education-ai"
 
 // 知识探索学习组件
 export const KnowledgeExplorer: React.FC<{
@@ -60,6 +61,9 @@ export const KnowledgeExplorer: React.FC<{
             </button>
           ))}
         </div>
+        <div className="mt-3 text-xs text-gray-600">
+          推荐知识点：{generateKnowledgePoints(selectedSubject).slice(0,3).join('、')}
+        </div>
       </div>
 
       {/* 功能选项卡 */}
@@ -69,7 +73,8 @@ export const KnowledgeExplorer: React.FC<{
             { id: "notes", label: "📝 学习笔记", icon: "📝" },
             { id: "mindmap", label: "🧠 思维脑图", icon: "🧠" },
             { id: "ppt", label: "📊 PPT制作", icon: "📊" },
-            { id: "template", label: "📋 模板库", icon: "📋" }
+            { id: "template", label: "📋 模板库", icon: "📋" },
+            { id: "path", label: "🧭 学习路径", icon: "🧭" }
           ].map(tab => (
             <button
               key={tab.id}
@@ -109,7 +114,7 @@ export const KnowledgeExplorer: React.FC<{
 const NotesGenerator: React.FC<{ subject: string; level: string }> = ({ subject, level }) => {
   const [noteTitle, setNoteTitle] = useState("")
   const [noteContent, setNoteContent] = useState("")
-  const [savedNotes, setSavedNotes] = useState<any[]>([])
+  const [savedNotes, setSavedNotes] = useState<{ id: number; title: string; content: string; subject: string; date: string }[]>([])
 
   const generateNoteTemplate = () => {
     const template = `# ${subject} 学习笔记
@@ -149,7 +154,7 @@ const NotesGenerator: React.FC<{ subject: string; level: string }> = ({ subject,
       {/* 笔记编辑区 */}
       <div>
         <div className="flex justify-between items-center mb-3">
-          <h5 className="font-semibold">✍️ 创建笔记</h5>
+          <h5 className="font-semibold">✍️ 创建笔记 <span className="ml-2 text-sm text-gray-500">学段：{level}</span></h5>
           <button 
             className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
             onClick={generateNoteTemplate}
@@ -245,11 +250,11 @@ const MindMapBuilder: React.FC<{ subject: string; level: string }> = ({ subject,
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h5 className="font-semibold">🧠 思维脑图构建器</h5>
+        <h5 className="font-semibold">🧠 思维脑图构建器 <span className="ml-2 text-sm text-gray-500">学段：{level}</span></h5>
         <div className="flex gap-2">
-          <button className="px-3 py-1 bg-green-600 text-white rounded text-sm">+ 添加节点</button>
+          <button className="px-3 py-1 bg-green-600 text-white rounded text-sm" onClick={() => addNode(mindMapNodes[0]?.id || 1, '新节点')}>+ 添加节点</button>
           <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm">💾 保存脑图</button>
-          <button className="px-3 py-1 bg-purple-600 text-white rounded text-sm">📤 导出图片</button>
+          <button className="px-3 py-1 bg紫-600 text-white rounded text-sm">📤 导出图片</button>
         </div>
       </div>
       
@@ -342,7 +347,7 @@ const PPTMaker: React.FC<{ subject: string; level: string }> = ({ subject, level
       {/* 编辑区域 */}
       <div className="lg:col-span-2">
         <div className="flex justify-between items-center mb-3">
-          <h5 className="font-semibold">✏️ 编辑幻灯片</h5>
+          <h5 className="font-semibold">✏️ 编辑幻灯片 <span className="ml-2 text-sm text-gray-500">学段：{level}</span></h5>
           <div className="flex gap-2">
             <button className="px-3 py-1 bg-green-600 text-white rounded text-sm">🎨 更换主题</button>
             <button className="px-3 py-1 bg-purple-600 text-white rounded text-sm">🔍 预览</button>
@@ -418,8 +423,8 @@ const TemplateLibrary: React.FC<{ subject: string; level: string }> = ({ subject
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h5 className="font-semibold">📋 教育模板库</h5>
-        <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm">+ 自定义模板</button>
+        <h5 className="font-semibold">📋 教育模板库 <span className="ml-2 text-sm text-gray-500">学科：{subject} · 学段：{level}</span></h5>
+        <button className="px-3 py-1 bg-blue-600 text白 rounded text-sm">+ 自定义模板</button>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -449,6 +454,70 @@ const TemplateLibrary: React.FC<{ subject: string; level: string }> = ({ subject
           <li>• 定期回顾和更新模板内容</li>
         </ul>
       </div>
+    </div>
+  )
+}
+
+// 学习路径
+const LearningPathPanel: React.FC<{ subject: string; level: string }> = ({ subject, level }) => {
+  const { generateLearningPath, isLoading } = useEducationAI()
+  const [result, setResult] = useState<{ path: Array<{ title: string; description: string; resources?: string[] }>; recommendations?: string[] } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleGenerate = async () => {
+    setError(null)
+    try {
+      const data = await generateLearningPath({ subject, level })
+      setResult(data)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "生成失败")
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h5 className="font-semibold">🧭 学习路径生成</h5>
+          <p className="text-xs text-gray-500">学科：{subject} ｜ 学段：{level}</p>
+        </div>
+        <button 
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          onClick={handleGenerate}
+          disabled={isLoading}
+        >
+          {isLoading ? "生成中..." : "生成学习路径"}
+        </button>
+      </div>
+
+      {error && <div className="text-red-600 text-sm">{error}</div>}
+
+      {!result ? (
+        <div className="text-gray-400 text-center py-8">点击“生成学习路径”获取个性化学习建议</div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <h6 className="font-medium">📌 路径节点</h6>
+            {result.path?.map((step, idx) => (
+              <div key={idx} className="border rounded-lg p-3">
+                <div className="font-semibold">{idx + 1}. {step.title}</div>
+                <div className="text-sm text-gray-600 mt-1">{step.description}</div>
+                {step.resources && step.resources.length > 0 && (
+                  <div className="mt-2 text-xs text-blue-700">资源：{step.resources.join('、')}</div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div>
+            <h6 className="font-medium mb-2">✅ 建议</h6>
+            <ul className="list-disc ml-5 text-sm text-gray-700 space-y-1">
+              {result.recommendations?.map((rec, i) => (
+                <li key={i}>{rec}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

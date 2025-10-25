@@ -62,7 +62,7 @@ export function AnimatedSidebar() {
                   'flex items-center p-3 rounded-lg text-lg transition-colors',
                   activeModule === item.id
                     ? 'bg-primary text-primary-foreground'
-                    - 'hover:bg-accent hover:text-accent-foreground'
+                    : 'hover:bg-accent hover:text-accent-foreground'
                 )}
               >
                 <item.icon className="mr-4" size={24} />

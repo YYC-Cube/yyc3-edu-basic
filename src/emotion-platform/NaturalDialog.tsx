@@ -1,4 +1,207 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react'
-import { MessageCircle, Mic, Volume2, Heart, Brain, Sparkles, Send } from 'lucide-react'\nimport { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'\nimport { Button } from '@/components/ui/button'\nimport { Input } from '@/components/ui/input'\nimport { Badge } from '@/components/ui/badge'\nimport { ScrollArea } from '@/components/ui/scroll-area'\nimport { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'\n\ninterface DialogMessage {\n  id: string\n  role: 'user' | 'assistant'\n  content: string\n  timestamp: number\n  emotion?: string\n  confidence?: number\n}\n\ninterface DialogContext {\n  topic: string\n  mood: string\n  userPreferences: string[]\n  conversationFlow: string[]\n}\n\ninterface NaturalDialogProps {\n  onMessageSent?: (message: DialogMessage) => void\n  onEmotionDetected?: (emotion: string, confidence: number) => void\n  userName?: string\n  assistantName?: string\n}\n\nexport const NaturalDialog: React.FC<NaturalDialogProps> = ({\n  onMessageSent,\n  onEmotionDetected,\n  userName = '学习者',\n  assistantName = 'AI助手'\n}) => {\n  const [messages, setMessages] = useState<DialogMessage[]>([\n    {\n      id: '1',\n      role: 'assistant',\n      content: '你好！我是你的专属AI学习伙伴，今天想学习什么呢？我会根据你的情绪和学习状态来调整我的回应方式哦！😊',\n      timestamp: Date.now() - 1000,\n      emotion: 'friendly',\n      confidence: 0.9\n    }\n  ])\n  \n  const [inputMessage, setInputMessage] = useState('')\n  const [isListening, setIsListening] = useState(false)\n  const [isTyping, setIsTyping] = useState(false)\n  const [dialogContext, setDialogContext] = useState<DialogContext>({\n    topic: '编程学习',\n    mood: 'encouraging',\n    userPreferences: ['实践导向', '互动式学习'],\n    conversationFlow: ['问候', '需求了解']\n  })\n  \n  const messagesEndRef = useRef<HTMLDivElement>(null)\n  const scrollAreaRef = useRef<HTMLDivElement>(null)\n\n  // 滚动到底部\n  const scrollToBottom = () => {\n    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })\n  }\n\n  useEffect(() => {\n    scrollToBottom()\n  }, [messages])\n\n  // 模拟AI智能回复\n  const generateAIResponse = (userMessage: string, userEmotion: string = 'neutral') => {\n    const responses = {\n      encouraging: [\n        '太棒了！你的想法很有创意，让我们一起把它实现出来吧！🚀',\n        '我能感受到你的学习热情，这种积极的态度会帮助你更快进步！💪',\n        '很好的问题！让我用一个有趣的方式来为你解答...',\n      ],\n      supportive: [\n        '我理解这可能有些困难，但请记住，每个专家都曾是初学者。让我们一步步来解决这个问题。',\n        '感觉有点挫折是很正常的，让我们换个角度来看这个问题，也许会有新的发现！',\n        '不用担心，学习就是一个不断试错的过程。让我来帮你梳理一下思路...',\n      ],\n      curious: [\n        '哇，你问了一个非常有深度的问题！让我来详细为你解释...',\n        '你的好奇心真的很棒！这正是成为优秀开发者的重要品质。',\n        '很高兴看到你在深入思考！让我们一起探索这个有趣的概念...',\n      ]\n    }\n    \n    const emotionResponses = responses.encouraging // 默认鼓励型\n    if (userEmotion === 'frustrated') return responses.supportive\n    if (userEmotion === 'curious') return responses.curious\n    \n    const randomResponse = emotionResponses[Math.floor(Math.random() * emotionResponses.length)]\n    return randomResponse\n  }\n\n  // 检测用户情感\n  const detectUserEmotion = (message: string) => {\n    const frustrationWords = ['难', '不懂', '复杂', '困惑', '错误']\n    const excitementWords = ['太好了', '明白了', '学会了', '有趣', '酷']\n    const questionWords = ['为什么', '怎么', '如何', '什么', '哪个']\n    \n    if (frustrationWords.some(word => message.includes(word))) {\n      return { emotion: 'frustrated', confidence: 0.8 }\n    }\n    \n    if (excitementWords.some(word => message.includes(word))) {\n      return { emotion: 'excited', confidence: 0.9 }\n    }\n    \n    if (questionWords.some(word => message.includes(word))) {\n      return { emotion: 'curious', confidence: 0.7 }\n    }\n    \n    return { emotion: 'neutral', confidence: 0.5 }\n  }\n\n  // 发送消息\n  const sendMessage = () => {\n    if (!inputMessage.trim()) return\n    \n    const userEmotion = detectUserEmotion(inputMessage)\n    \n    const userMessage: DialogMessage = {\n      id: `user-${Date.now()}`,\n      role: 'user',\n      content: inputMessage,\n      timestamp: Date.now(),\n      emotion: userEmotion.emotion,\n      confidence: userEmotion.confidence\n    }\n    \n    setMessages(prev => [...prev, userMessage])\n    onMessageSent?.(userMessage)\n    onEmotionDetected?.(userEmotion.emotion, userEmotion.confidence)\n    \n    setInputMessage('')\n    setIsTyping(true)\n    \n    // 模拟AI思考时间\n    setTimeout(() => {\n      const aiResponse = generateAIResponse(inputMessage, userEmotion.emotion)\n      \n      const aiMessage: DialogMessage = {\n        id: `ai-${Date.now()}`,\n        role: 'assistant',\n        content: aiResponse,\n        timestamp: Date.now(),\n        emotion: 'helpful',\n        confidence: 0.9\n      }\n      \n      setMessages(prev => [...prev, aiMessage])\n      setIsTyping(false)\n      onMessageSent?.(aiMessage)\n      \n      // 更新对话上下文\n      setDialogContext(prev => ({\n        ...prev,\n        conversationFlow: [...prev.conversationFlow.slice(-5), 'ai_response']\n      }))\n    }, 1000 + Math.random() * 2000)\n  }\n\n  // 语音输入模拟\n  const toggleListening = () => {\n    setIsListening(!isListening)\n    if (!isListening) {\n      // 模拟语音识别\n      setTimeout(() => {\n        setInputMessage('这是通过语音输入的消息示例')\n        setIsListening(false)\n      }, 2000)\n    }\n  }\n\n  const getEmotionIcon = (emotion: string) => {\n    const icons = {\n      friendly: '😊',\n      helpful: '🤝',\n      excited: '🎉',\n      curious: '🤔',\n      frustrated: '😔',\n      neutral: '😐'\n    }\n    return icons[emotion as keyof typeof icons] || '💬'\n  }\n\n  const getEmotionColor = (emotion: string) => {\n    const colors = {\n      friendly: 'text-green-600',\n      helpful: 'text-blue-600',\n      excited: 'text-yellow-600',\n      curious: 'text-purple-600',\n      frustrated: 'text-red-600',\n      neutral: 'text-gray-600'\n    }\n    return colors[emotion as keyof typeof colors] || 'text-gray-600'\n  }\n\n  return (\n    <div className=\"space-y-4\">\n      {/* 对话上下文显示 */}\n      <Card>\n        <CardHeader>\n          <CardTitle className=\"flex items-center gap-2\">\n            <MessageCircle className=\"text-blue-500\" />\n            自然对话系统\n          </CardTitle>\n        </CardHeader>\n        <CardContent>\n          <div className=\"flex gap-4 mb-4\">\n            <div className=\"text-center\">\n              <div className=\"text-sm text-gray-500\">当前话题</div>\n              <Badge variant=\"outline\">{dialogContext.topic}</Badge>\n            </div>\n            \n            <div className=\"text-center\">\n              <div className=\"text-sm text-gray-500\">对话氛围</div>\n              <Badge variant=\"outline\">{dialogContext.mood}</Badge>\n            </div>\n            \n            <div className=\"text-center\">\n              <div className=\"text-sm text-gray-500\">轮次</div>\n              <Badge variant=\"outline\">{Math.floor(messages.length / 2)}</Badge>\n            </div>\n          </div>\n        </CardContent>\n      </Card>\n\n      {/* 对话区域 */}\n      <Card className=\"h-96\">\n        <CardHeader className=\"pb-3\">\n          <div className=\"flex items-center justify-between\">\n            <div className=\"flex items-center gap-2\">\n              <Heart className=\"w-4 h-4 text-red-500\" />\n              <span className=\"text-sm font-medium\">情感化对话</span>\n            </div>\n            {isTyping && (\n              <div className=\"flex items-center gap-1 text-sm text-gray-500\">\n                <Brain className=\"w-4 h-4 animate-pulse\" />\n                {assistantName} 正在思考...\n              </div>\n            )}\n          </div>\n        </CardHeader>\n        \n        <CardContent className=\"p-0 flex-1\">\n          <ScrollArea className=\"h-64 px-4\" ref={scrollAreaRef}>\n            <div className=\"space-y-4\">\n              {messages.map((message) => (\n                <div\n                  key={message.id}\n                  className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}\n                >\n                  <Avatar className=\"w-8 h-8\">\n                    <AvatarImage src={message.role === 'user' ? '/placeholder-user.webp' : '/placeholder-logo.svg'} />\n                    <AvatarFallback>\n                      {message.role === 'user' ? userName[0] : 'AI'}\n                    </AvatarFallback>\n                  </Avatar>\n                  \n                  <div className={`flex-1 ${message.role === 'user' ? 'text-right' : ''}`}>\n                    <div className=\"flex items-center gap-2 mb-1\">\n                      <span className=\"text-sm font-medium\">\n                        {message.role === 'user' ? userName : assistantName}\n                      </span>\n                      {message.emotion && (\n                        <span className={`text-xs ${getEmotionColor(message.emotion)}`}>\n                          {getEmotionIcon(message.emotion)}\n                        </span>\n                      )}\n                      <span className=\"text-xs text-gray-400\">\n                        {new Date(message.timestamp).toLocaleTimeString()}\n                      </span>\n                    </div>\n                    \n                    <div className={`p-3 rounded-lg max-w-md ${\n                      message.role === 'user' \n                        ? 'bg-blue-500 text-white ml-auto' \n                        : 'bg-gray-100 text-gray-900'\n                    }`}>\n                      {message.content}\n                    </div>\n                    \n                    {message.confidence && message.confidence > 0.7 && (\n                      <div className=\"text-xs text-gray-400 mt-1\">\n                        情感置信度: {(message.confidence * 100).toFixed(0)}%\n                      </div>\n                    )}\n                  </div>\n                </div>\n              ))}\n              <div ref={messagesEndRef} />\n            </div>\n          </ScrollArea>\n        </CardContent>\n      </Card>\n\n      {/* 输入区域 */}\n      <Card>\n        <CardContent className=\"p-4\">\n          <div className=\"flex gap-2\">\n            <Input\n              value={inputMessage}\n              onChange={(e) => setInputMessage(e.target.value)}\n              placeholder={isListening ? \"正在听取语音输入...\" : \"输入你想说的话...\"}\n              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}\n              disabled={isListening || isTyping}\n              className={isListening ? \"border-red-300 bg-red-50\" : \"\"}\n            />\n            \n            <Button\n              onClick={toggleListening}\n              variant={isListening ? \"destructive\" : \"outline\"}\n              size=\"icon\"\n              disabled={isTyping}\n            >\n              <Mic className={`w-4 h-4 ${isListening ? 'animate-pulse' : ''}`} />\n            </Button>\n            \n            <Button\n              onClick={sendMessage}\n              disabled={!inputMessage.trim() || isTyping || isListening}\n            >\n              <Send className=\"w-4 h-4\" />\n            </Button>\n          </div>\n          \n          <div className=\"flex justify-between items-center mt-3 text-xs text-gray-500\">\n            <div className=\"flex items-center gap-4\">\n              <span className=\"flex items-center gap-1\">\n                <Sparkles className=\"w-3 h-3\" />\n                智能情感识别\n              </span>\n              <span className=\"flex items-center gap-1\">\n                <Brain className=\"w-3 h-3\" />\n                上下文理解\n              </span>\n              <span className=\"flex items-center gap-1\">\n                <Heart className=\"w-3 h-3\" />\n                个性化回应\n              </span>\n            </div>\n            \n            <div>\n              按回车发送\n            </div>\n          </div>\n        </CardContent>\n      </Card>\n    </div>\n  )\n}
+import { MessageCircle, Mic, Send } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+
+interface DialogMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: number
+  emotion?: string
+  confidence?: number
+}
+
+interface DialogContext {
+  topic: string
+  mood: string
+  userPreferences: string[]
+  conversationFlow: string[]
+}
+
+interface NaturalDialogProps {
+  onMessageSent?: (message: DialogMessage) => void
+  onEmotionDetected?: (emotion: string, confidence: number) => void
+  userName?: string
+  assistantName?: string
+}
+
+export const NaturalDialog: React.FC<NaturalDialogProps> = ({
+  onMessageSent,
+  onEmotionDetected,
+  userName = '你',
+  assistantName = 'YYC³ AI'
+}) => {
+  const [messages, setMessages] = useState<DialogMessage[]>([])
+  const [inputMessage, setInputMessage] = useState('')
+  const [context] = useState<DialogContext>({
+    topic: '学习与创作',
+    mood: '积极',
+    userPreferences: ['直观解释', '示例驱动', '简洁回答'],
+    conversationFlow: []
+  })
+  const endRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  const detectUserEmotion = (message: string) => {
+    const frustrationWords = ['难', '不懂', '复杂', '困惑', '错误']
+    const excitementWords = ['太好了', '明白了', '学会了', '有趣', '酷']
+    const questionWords = ['为什么', '怎么', '如何', '什么', '哪个']
+    
+    if (frustrationWords.some(word => message.includes(word))) {
+      return { emotion: 'frustrated', confidence: 0.8 }
+    }
+    
+    if (excitementWords.some(word => message.includes(word))) {
+      return { emotion: 'excited', confidence: 0.9 }
+    }
+    
+    if (questionWords.some(word => message.includes(word))) {
+      return { emotion: 'curious', confidence: 0.7 }
+    }
+    
+    return { emotion: 'neutral', confidence: 0.5 }
+  }
+
+  const getResponse = (userMessage: string) => {
+    const { emotion } = detectUserEmotion(userMessage)
+    
+    if (emotion === 'frustrated') {
+      return '别急，我来把它拆解成简单步骤，一步一步带你过。'
+    }
+    
+    if (emotion === 'excited') {
+      return '太棒了！我们可以把这个主题延展成一个小项目，继续探索更酷的玩法。'
+    }
+    
+    if (emotion === 'curious') {
+      return '好问题！我们一起来从原因、原理、实践三个层面来理解它。'
+    }
+    
+    return '收到~我会根据你的习惯给出清晰直观的解释。'
+  }
+
+  const handleSend = () => {
+    const text = inputMessage.trim()
+    if (!text) return
+    
+    const userMsg: DialogMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: text,
+      timestamp: Date.now()
+    }
+    
+    setMessages(prev => [...prev, userMsg])
+    onMessageSent?.(userMsg)
+    
+    const { emotion, confidence } = detectUserEmotion(text)
+    onEmotionDetected?.(emotion, confidence)
+    
+    const aiMsg: DialogMessage = {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content: getResponse(text),
+      timestamp: Date.now(),
+      emotion,
+      confidence
+    }
+    
+    setMessages(prev => [...prev, aiMsg])
+    setInputMessage('')
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageCircle />
+            自然对话系统
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* 对话上下文 */}
+            <div className="space-y-2">
+              <div className="text-sm text-gray-600">当前主题</div>
+              <div className="text-sm font-medium">{context.topic}</div>
+              
+              <div className="text-sm text-gray-600">心情状态</div>
+              <Badge variant="outline">{context.mood}</Badge>
+              
+              <div className="text-sm text-gray-600">偏好设置</div>
+              <div className="flex flex-wrap gap-2">
+                {context.userPreferences.map((pref) => (
+                  <Badge key={pref} variant="secondary">{pref}</Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* 对话区 */}
+            <div className="md:col-span-2">
+              <ScrollArea className="h-64 border rounded-md p-3">
+                <div className="space-y-3">
+                  {messages.map((msg) => (
+                    <div key={msg.id} className={`flex items-start gap-2 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+                      {msg.role === 'assistant' && (
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src="/placeholder-user.jpg" />
+                          <AvatarFallback>AI</AvatarFallback>
+                        </Avatar>
+                      )}
+                      
+                      <div className={`max-w-[70%] rounded-md p-2 text-sm ${msg.role === 'user' ? 'bg-blue-50 text-blue-700' : 'bg-gray-50 text-gray-800'}`}>
+                        <div>{msg.content}</div>
+                        <div className="flex items-center gap-2 mt-1 text-xs">
+                          <Badge variant="outline">{msg.role === 'user' ? userName : assistantName}</Badge>
+                          {msg.emotion && (
+                            <Badge variant="secondary">情感：{msg.emotion}（{Math.round((msg.confidence || 0) * 100)}%）</Badge>
+                          )}
+                          <span className="text-gray-500">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                      </div>
+                      
+                      {msg.role === 'user' && (
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src="/placeholder.jpg" />
+                          <AvatarFallback>U</AvatarFallback>
+                        </Avatar>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div ref={endRef} />
+              </ScrollArea>
+              
+              <div className="flex gap-2 mt-2">
+                <Input 
+                  placeholder="输入你的问题或想法..."
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                />
+                <Button onClick={handleSend} className="flex items-center gap-2">
+                  <Send className="w-4 h-4" />
+                  发送
+                </Button>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Mic className="w-4 h-4" />
+                  语音输入
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

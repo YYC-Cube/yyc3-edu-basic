@@ -1,6 +1,58 @@
 // YYC³ 情感声效交互平台 - 类型定义文件
 // 详细的TypeScript类型定义和接口说明
 
+// 基础类型定义，避免循环依赖
+export enum YYC3PrimaryEmotion {
+  JOY = 'joy',
+  SADNESS = 'sadness',
+  ANGER = 'anger',
+  FEAR = 'fear',
+  SURPRISE = 'surprise',
+  DISGUST = 'disgust',
+  NEUTRAL = 'neutral'
+}
+
+export interface YYC3EmotionState {
+  valence: number;
+  arousal: number;
+  dominance: number;
+  primaryEmotion: YYC3PrimaryEmotion;
+  emotionIntensity: number;
+  secondaryEmotions: Array<{emotion: string; intensity: number}>;
+}
+
+export interface YYC3EmotionTrigger {
+  type: string;
+  source: string;
+  content: string | number | boolean | object | null;
+  timestamp: Date;
+}
+
+export enum YYC3Waveform {
+  SINE = 'sine',
+  SQUARE = 'square',
+  TRIANGLE = 'triangle',
+  SAWTOOTH = 'sawtooth'
+}
+
+export interface YYC3SoundParameters {
+  frequency: number;
+  amplitude: number;
+  waveform: YYC3Waveform;
+  duration: number;
+  harmonics: number[];
+  attack: number;
+  decay: number;
+  sustain: number;
+  release: number;
+}
+
+export interface YYC3EmotionContext {
+  currentEmotion: YYC3EmotionState;
+  audioContext: AudioContext | null;
+  config: {enabled: boolean; autoStart?: boolean; priority?: number; environment?: object; resources?: object; parameters?: object};
+}
+
 // 扩展的情感状态类型定义
 export interface YYC3EmotionStateExtended extends YYC3EmotionState {
   // 情感历史轨迹
@@ -59,7 +111,7 @@ export interface YYC3SocialNorm {
 export interface YYC3PersonalityFactors {
   // 大五人格模型
   openness: number       // 开放性 [0, 1]
-  conscientiousness: number // 责任心 [0, 1]
+  conscientiousness: number // responsibility [0, 1]
   extraversion: number   // 外向性 [0, 1]
   agreeableness: number  // 宜人性 [0, 1]
   neuroticism: number    // 神经质 [0, 1]
@@ -325,7 +377,7 @@ export interface YYC3SoundRecommendation {
   category: 'frequency' | 'amplitude' | 'timbre' | 'timing' | 'spatial'
   priority: 'high' | 'medium' | 'low'
   description: string
-  suggestedChange: any
+  suggestedChange: string | number | boolean | object | null
   expectedImprovement: number      // [0, 1]: 预期改进效果
 }
 
@@ -435,17 +487,19 @@ export interface YYC3EmotionSoundConfig {
   }
 }
 
-// 导出所有类型和接口
-export type {
-  YYC3EmotionState,
-  YYC3PrimaryEmotion,
-  YYC3EmotionComponent,
-  YYC3EmotionTrigger,
-  YYC3EmotionContext,
-  YYC3SoundParameters,
-  YYC3Waveform,
-  YYC3SoundEnvelope,
-  YYC3SpatialPosition,
-  YYC3EmotionalTone,
-  YYC3AdaptiveParameters
-} from './index'
+// 只导出此文件中定义的类型和接口，避免与index.ts中的导出冲突
+// 由于index.ts会重新导出所有需要的内容，这里暂时注释掉直接导出
+// type YYC3EmotionStateType = YYC3EmotionState
+// YYC3情感组件类型
+export interface YYC3EmotionComponentProps {
+  emotionState: YYC3EmotionState;
+  onEmotionChange?: (emotion: string, intensity: number) => void;
+  config?: Record<string, unknown>;
+}
+
+export type YYC3EmotionComponentType = React.ComponentType<YYC3EmotionComponentProps>
+// type YYC3EmotionTriggerType = YYC3EmotionTrigger
+// type YYC3EmotionContextType = YYC3EmotionContext
+// type YYC3SoundParametersType = YYC3SoundParameters
+
+// 保留枚举定义但暂时不直接导出，通过index.ts统一导出

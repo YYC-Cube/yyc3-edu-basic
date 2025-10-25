@@ -10,7 +10,7 @@ export interface VisualNode {
   category: 'ui' | 'logic' | 'data' | 'emotion' | 'ai'
   position: { x: number; y: number }
   size: { width: number; height: number }
-  properties: Record<string, any>
+  properties: Record<string, unknown>
   inputs: NodePort[]
   outputs: NodePort[]
   metadata: {
@@ -25,7 +25,7 @@ export interface NodePort {
   name: string
   type: 'string' | 'number' | 'boolean' | 'object' | 'array' | 'function' | 'emotion' | 'ai-response'
   required: boolean
-  defaultValue?: any
+  defaultValue?: unknown
 }
 
 export interface VisualEdge {
@@ -139,7 +139,7 @@ export class VisualProgrammingEngine {
     this.emit('node-removed', { nodeId })
   }
 
-  updateNodeProperties(nodeId: string, properties: Record<string, any>): void {
+  updateNodeProperties(nodeId: string, properties: Record<string, unknown>): void {
     const node = this.project.nodes.find(n => n.id === nodeId)
     if (node) {
       node.properties = { ...node.properties, ...properties }
@@ -160,7 +160,7 @@ export class VisualProgrammingEngine {
       sourcePortId,
       targetNodeId,
       targetPortId,
-      type: this.inferEdgeType(sourceNodeId, sourcePortId, targetNodeId, targetPortId)
+      type: this.inferEdgeType(sourceNodeId, sourcePortId, targetNodeId)
     }
 
     this.project.edges.push(edge)
@@ -204,24 +204,30 @@ export class VisualProgrammingEngine {
     return compatibilityMap[sourceType]?.includes(targetType) || false
   }
 
-  private inferEdgeType(sourceNodeId: string, sourcePortId: string, targetNodeId: string, targetPortId: string): VisualEdge['type'] {
+  private inferEdgeType(sourceNodeId: string, sourcePortId: string, targetNodeId: string): string {
+    // 根据源节点的输出端口类型和目标节点的输入端口类型推断边缘类型
     const sourceNode = this.project.nodes.find(n => n.id === sourceNodeId)
     const targetNode = this.project.nodes.find(n => n.id === targetNodeId)
     
-    if (sourceNode?.category === 'emotion' || targetNode?.category === 'emotion') {
+    if (!sourceNode || !targetNode) return 'default'
+    
+    const sourcePort = sourceNode.outputs?.find(p => p.id === sourcePortId)
+    const targetPort = targetNode.inputs?.find(p => p.id === sourcePortId)
+    
+    // 如果有明确的类型定义，则使用它
+    if (sourcePort?.type) return sourcePort.type
+    if (targetPort?.type) return targetPort.type
+    
+    // 根据节点类别推断类型
+    if (sourceNode.category === 'emotion' || targetNode.category === 'emotion') {
       return 'emotion'
     }
     
-    if (sourceNode?.category === 'ai' || targetNode?.category === 'ai') {
-      return 'ai-flow'
+    if (sourceNode.category === 'ai' || targetNode.category === 'ai') {
+      return 'text'
     }
     
-    const sourcePort = sourceNode?.outputs.find(p => p.id === sourcePortId)
-    if (sourcePort?.type === 'function') {
-      return 'event'
-    }
-    
-    return 'data'
+    return 'default'
   }
 
   // 代码生成
@@ -328,20 +334,23 @@ ${jsx}
   }
 
   private generateReactJSX(): string {
-    // 根据节点生成JSX结构
-    const uiNodes = this.project.nodes
-      .filter(node => node.category === 'ui')
-      .sort((a, b) => a.position.y - b.position.y) // 按Y轴位置排序
-
-    const jsx = uiNodes.map(node => {
-      const definition = this.nodeRegistry.get(node.type)
-      if (definition?.generateJSX) {
-        return definition.generateJSX(node, this.project)
-      }
-      return `    <div /* ${node.label} */></div>`
-    }).join('\n')
-
-    return `    <div className="visual-app">\n${jsx}\n    </div>`
+    const jsxElements: string[] = []
+    
+    // 生成UI元素
+    this.project.nodes.filter(node => node.category === 'ui').forEach(node => {
+      jsxElements.push(this.generateComponent(node))
+    })
+    
+    return jsxElements.join('\n\n')
+  }
+  
+  // Helper method to generate component JSX
+  generateComponent(node: VisualNode): string {
+    const definition = this.nodeRegistry.get(node.type)
+    if (definition?.generateJSX) {
+      return definition.generateJSX(node)
+    }
+    return `    <div /* ${node.label} */></div>`
   }
 
   private generateReactExports(): string {
@@ -351,11 +360,34 @@ ${jsx}
 
   private generateVueCode(): string {
     // Vue代码生成实现
-    return `<!-- Generated Vue component -->\n<template>\n  <div>Vue component placeholder</div>\n</template>`
+    const jsxElements: string[] = []
+    this.project.nodes.filter(node => node.category === 'ui').forEach(node => {
+      const definition = this.nodeRegistry.get(node.type)
+      if (definition?.generateJSX) {
+        jsxElements.push(definition.generateJSX(node).replace(/className=/g, 'class='))
+      }
+    })
+    return `<template>\n  <div class="visual-app">\n${jsxElements.join('\n\n')}\n  </div>\n</template>`
   }
 
   private generateVanillaCode(): string {
     // 原生JavaScript代码生成实现
+    let code = '// Vanilla JS Component\n'
+    code += 'const container = document.createElement("div");\n'
+    code += 'container.className = "visual-app";\n\n'
+    
+    this.project.nodes.filter(node => node.category === 'ui').forEach(node => {
+      const definition = this.nodeRegistry.get(node.type)
+      if (definition?.generateJSX) {
+        code += `// Component: ${node.label}\n`
+        code += 'const element = document.createElement("div");\n'
+        code += `element.textContent = "${node.label}";\n`
+        code += 'container.appendChild(element);\n\n'
+      }
+    })
+    
+    code += 'document.body.appendChild(container);'
+    return code
   }
 
   // 工具方法
@@ -367,8 +399,8 @@ ${jsx}
     return str.replace(/(?:^|[-_])(\w)/g, (_, char) => char.toUpperCase())
   }
 
-  private extractStateVariables(): Array<{name: string, defaultValue: any}> {
-    const variables: Array<{name: string, defaultValue: any}> = []
+  private extractStateVariables(): Array<{name: string, defaultValue: unknown}> {
+    const variables: Array<{name: string, defaultValue: unknown}> = []
     
     // 从节点属性中提取状态变量
     this.project.nodes.forEach(node => {
@@ -405,7 +437,7 @@ ${jsx}
   }
 
   // 事件系统
-  private emit(eventType: string, data: any): void {
+  private emit(eventType: string, data: unknown): void {
     this.eventEmitter.dispatchEvent(new CustomEvent(eventType, { detail: data }))
   }
 
@@ -438,8 +470,8 @@ ${jsx}
         size: 'medium'
       },
       reactImports: ["import { Button } from '@/components/ui/button'"],
-      generateJSX: (node, project) => {
-        const clickHandler = this.findConnectedHandler(node.id, 'click', project)
+      generateJSX: (node) => {
+        const clickHandler = this.findConnectedHandler(node.id, 'click', this.project)
         return `      <Button 
         onClick={${clickHandler || '() => {}'}}
         variant="${node.properties.variant}"
@@ -470,7 +502,7 @@ ${jsx}
         type: 'text'
       },
       reactImports: ["import { Input } from '@/components/ui/input'"],
-      generateJSX: (node, project) => {
+      generateJSX: (node) => {
         return `      <Input 
         placeholder="${node.properties.placeholder}"
         type="${node.properties.type}"
@@ -498,7 +530,7 @@ ${jsx}
         sensitivity: 0.7
       },
       reactImports: ["import { EmotionDetector } from '@/components/emotion/detector'"],
-      generateJSX: (node, project) => {
+      generateJSX: (node) => {
         return `      <EmotionDetector 
         mode="${node.properties.mode}"
         sensitivity={${node.properties.sensitivity}}
@@ -527,7 +559,7 @@ ${jsx}
         temperature: 0.7
       },
       reactImports: ["import { AIAssistant } from '@/components/ai/assistant'"],
-      generateJSX: (node, project) => {
+      generateJSX: (node) => {
         return `      <AIAssistant 
         model="${node.properties.model}"
         maxTokens={${node.properties.maxTokens}}
@@ -566,9 +598,9 @@ export interface NodeDefinition {
   examples: string[]
   inputs: NodePort[]
   outputs: NodePort[]
-  defaultProperties: Record<string, any>
+  defaultProperties: Record<string, unknown>
   reactImports?: string[]
-  generateJSX?: (node: VisualNode, project: VisualProject) => string
+  generateJSX?: (node: VisualNode) => string
 }
 
 // 导出引擎实例

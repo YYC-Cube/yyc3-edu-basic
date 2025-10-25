@@ -1,15 +1,21 @@
 // YYC³ 核心架构 - 云(Cloud)层接口定义
 // 负责所有云端服务交互的标准化接口
 
-import { YYC3YuOutput } from '../yu/interfaces'
+// 修复错误1：找不到../yu/interfaces模块，临时定义基础YYC3YuOutput接口（若项目有实际定义，可替换为真实导入）
+export interface YYC3YuOutput {
+  id: string;
+  content: string;
+  type: 'text' | 'code' | 'multimedia';
+  metadata?: Record<string, unknown>;
+}
 
 // 云端客户端基础接口
 export interface YYC3CloudClient {
-  provider: YYC3CloudProvider
-  region: string
-  endpoint: string
-  authentication: YYC3CloudAuthentication
-  config: YYC3CloudConfig
+  provider: YYC3CloudProvider;
+  region: string;
+  endpoint: string;
+  authentication: YYC3CloudAuthentication;
+  config: YYC3CloudConfig;
 }
 
 // 云服务提供商枚举
@@ -25,10 +31,10 @@ export enum YYC3CloudProvider {
 
 // 云端认证接口
 export interface YYC3CloudAuthentication {
-  type: YYC3AuthType
-  credentials: YYC3CloudCredentials
-  refreshToken?: string
-  expiresAt?: Date
+  type: YYC3AuthType;
+  credentials: YYC3CloudCredentials;
+  refreshToken?: string;
+  expiresAt?: Date;
 }
 
 // 认证类型
@@ -42,81 +48,82 @@ export enum YYC3AuthType {
 
 // 云端凭证
 export interface YYC3CloudCredentials {
-  apiKey?: string
-  clientId?: string
-  clientSecret?: string
-  tenantId?: string
-  subscriptionId?: string
-  accessToken?: string
-  certificate?: YYC3Certificate
+  apiKey?: string;
+  clientId?: string;
+  clientSecret?: string;
+  tenantId?: string;
+  subscriptionId?: string;
+  accessToken?: string;
+  certificate?: YYC3Certificate;
 }
 
 // 证书信息
 export interface YYC3Certificate {
-  path: string
-  password?: string
-  type: 'pfx' | 'pem' | 'der'
+  path: string;
+  password?: string;
+  type: 'pfx' | 'pem' | 'der';
 }
 
 // 云端配置
 export interface YYC3CloudConfig {
-  timeout: number
-  retryAttempts: number
-  retryDelay: number
-  compression: boolean
-  encryption: YYC3EncryptionConfig
-  logging: YYC3LoggingConfig
-  monitoring: YYC3MonitoringConfig
+  timeout: number;
+  retryAttempts: number;
+  retryDelay: number;
+  compression: boolean;
+  encryption: YYC3EncryptionConfig;
+  logging: YYC3LoggingConfig;
+  monitoring: YYC3MonitoringConfig;
 }
 
 // 加密配置
 export interface YYC3EncryptionConfig {
-  enabled: boolean
-  algorithm?: string
-  keyManagement?: YYC3KeyManagement
+  enabled: boolean;
+  algorithm?: string;
+  keyManagement?: YYC3KeyManagement;
 }
 
 // 密钥管理
 export interface YYC3KeyManagement {
-  provider: string
-  keyVaultUrl?: string
-  keyId?: string
-  rotationPolicy?: YYC3KeyRotationPolicy
+  provider: string;
+  keyVaultUrl?: string;
+  keyId?: string;
+  rotationPolicy?: YYC3KeyRotationPolicy;
 }
 
 // 密钥轮换策略
 export interface YYC3KeyRotationPolicy {
-  enabled: boolean
-  interval: number  // days
-  autoRotate: boolean
+  enabled: boolean;
+  interval: number;  // days
+  autoRotate: boolean;
 }
 
 // 日志配置
 export interface YYC3LoggingConfig {
-  level: 'debug' | 'info' | 'warn' | 'error'
-  destination: 'console' | 'file' | 'cloud'
-  retention: number  // days
-  format: 'json' | 'text'
+  level: 'debug' | 'info' | 'warn' | 'error';
+  destination: 'console' | 'file' | 'cloud';
+  retention: number;  // days
+  format: 'json' | 'text';
 }
 
 // 监控配置
 export interface YYC3MonitoringConfig {
-  enabled: boolean
-  metricsEndpoint?: string
-  tracingEndpoint?: string
-  sampling: number  // 0-1
+  enabled: boolean;
+  metricsEndpoint?: string;
+  tracingEndpoint?: string;
+  sampling: number;  // 0-1
 }
 
+// 修复错误2：将默认类型any改为unknown（更安全的类型声明）
 // 云端API响应接口
-export interface YYC3CloudResponse<T = any> {
-  data: T
-  status: YYC3CloudStatus
-  statusCode: number
-  headers: Record<string, string>
-  requestId: string
-  timestamp: Date
-  processingTime: number
-  errors?: YYC3CloudError[]
+export interface YYC3CloudResponse<T = unknown> {
+  data: T;
+  status: YYC3CloudStatus;
+  statusCode: number;
+  headers: Record<string, string>;
+  requestId: string;
+  timestamp: Date;
+  processingTime: number;
+  errors?: YYC3CloudError[];
 }
 
 // 云端状态枚举
@@ -132,12 +139,12 @@ export enum YYC3CloudStatus {
 
 // 云端错误定义
 export interface YYC3CloudError {
-  code: YYC3CloudErrorCode
-  message: string
-  details?: any
-  timestamp: Date
-  requestId?: string
-  retryable: boolean
+  code: YYC3CloudErrorCode;
+  message: string;
+  details?: unknown;
+  timestamp: Date;
+  requestId?: string;
+  retryable: boolean;
 }
 
 // 云端错误代码
@@ -155,50 +162,50 @@ export enum YYC3CloudErrorCode {
 
 // AI服务接口
 export interface YYC3CloudAIService {
-  analyze(input: YYC3YuOutput): Promise<YYC3CloudResponse<YYC3AIAnalysisResult>>
-  generateContent(prompt: YYC3ContentPrompt): Promise<YYC3CloudResponse<YYC3GeneratedContent>>
-  trainModel(data: YYC3TrainingData): Promise<YYC3CloudResponse<YYC3TrainingResult>>
-  getModelInfo(modelId: string): Promise<YYC3CloudResponse<YYC3ModelInfo>>
+  analyze(input: YYC3YuOutput): Promise<YYC3CloudResponse<YYC3AIAnalysisResult>>;
+  generateContent(prompt: YYC3ContentPrompt): Promise<YYC3CloudResponse<YYC3GeneratedContent>>;
+  trainModel(data: YYC3TrainingData): Promise<YYC3CloudResponse<YYC3TrainingResult>>;
+  getModelInfo(modelId: string): Promise<YYC3CloudResponse<YYC3ModelInfo>>;
 }
 
 // AI分析结果
 export interface YYC3AIAnalysisResult {
-  enhanced: YYC3YuOutput
-  insights: YYC3AIInsight[]
-  recommendations: YYC3AIRecommendation[]
-  confidence: number
+  enhanced: YYC3YuOutput;
+  insights: YYC3AIInsight[];
+  recommendations: YYC3AIRecommendation[];
+  confidence: number;
 }
 
 // AI洞察
 export interface YYC3AIInsight {
-  type: string
-  description: string
-  importance: number
-  evidence: any[]
+  type: string;
+  description: string;
+  importance: number;
+  evidence: unknown[];
 }
 
 // AI推荐
 export interface YYC3AIRecommendation {
-  action: string
-  reason: string
-  priority: number
-  implementation: YYC3ImplementationGuide
+  action: string;
+  reason: string;
+  priority: number;
+  implementation: YYC3ImplementationGuide;
 }
 
 // 实施指南
 export interface YYC3ImplementationGuide {
-  steps: string[]
-  resources: string[]
-  estimatedTime: number
-  difficulty: 'easy' | 'medium' | 'hard'
+  steps: string[];
+  resources: string[];
+  estimatedTime: number;
+  difficulty: 'easy' | 'medium' | 'hard';
 }
 
 // 内容生成提示
 export interface YYC3ContentPrompt {
-  type: YYC3ContentType
-  prompt: string
-  context?: any
-  parameters?: YYC3GenerationParameters
+  type: YYC3ContentType;
+  prompt: string;
+  context?: unknown;
+  parameters?: YYC3GenerationParameters;
 }
 
 // 内容类型
@@ -212,115 +219,117 @@ export enum YYC3ContentType {
 
 // 生成参数
 export interface YYC3GenerationParameters {
-  maxLength?: number
-  temperature?: number
-  topP?: number
-  frequencyPenalty?: number
-  presencePenalty?: number
-  stopSequences?: string[]
+  maxLength?: number;
+  temperature?: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+  stopSequences?: string[];
 }
 
 // 生成内容
 export interface YYC3GeneratedContent {
-  content: string | Buffer
-  metadata: YYC3ContentMetadata
-  usage: YYC3UsageStats
+  content: string | Buffer;
+  metadata: YYC3ContentMetadata;
+  usage: YYC3UsageStats;
 }
 
 // 内容元数据
 export interface YYC3ContentMetadata {
-  type: YYC3ContentType
-  format: string
-  size: number
-  quality?: number
-  duration?: number
-  resolution?: string
+  type: YYC3ContentType;
+  format: string;
+  size: number;
+  quality?: number;
+  duration?: number;
+  resolution?: string;
 }
 
 // 使用统计
 export interface YYC3UsageStats {
-  tokensUsed: number
-  requestsCount: number
-  processingTime: number
-  cost?: number
-  quota?: YYC3QuotaInfo
+  tokensUsed: number;
+  requestsCount: number;
+  processingTime: number;
+  cost?: number;
+  quota?: YYC3QuotaInfo;
 }
 
 // 配额信息
 export interface YYC3QuotaInfo {
-  used: number
-  limit: number
-  resetTime: Date
-  billingPeriod: string
+  used: number;
+  limit: number;
+  resetTime: Date;
+  billingPeriod: string;
 }
 
 // 训练数据
 export interface YYC3TrainingData {
-  dataset: YYC3Dataset
-  modelConfig: YYC3ModelTrainingConfig
-  validationSplit: number
-  augmentation?: YYC3DataAugmentation
+  dataset: YYC3Dataset;
+  modelConfig: YYC3ModelTrainingConfig;
+  validationSplit: number;
+  augmentation?: YYC3DataAugmentation;
 }
 
 // 数据集
 export interface YYC3Dataset {
-  id: string
-  name: string
-  description: string
-  samples: YYC3DataSample[]
-  metadata: YYC3DatasetMetadata
+  id: string;
+  name: string;
+  description: string;
+  samples: YYC3DataSample[];
+  metadata: YYC3DatasetMetadata;
 }
 
 // 数据样本
 export interface YYC3DataSample {
-  input: any
-  output?: any
-  label?: string
-  weight?: number
-  metadata?: any
+  input: unknown;
+  output?: unknown;
+  label?: string;
+  weight?: number;
+  metadata?: unknown;
 }
 
 // 数据集元数据
 export interface YYC3DatasetMetadata {
-  version: string
-  createdAt: Date
-  updatedAt: Date
-  size: number
-  format: string
-  schema: any
+  version: string;
+  createdAt: Date;
+  updatedAt: Date;
+  size: number;
+  format: string;
+  schema: unknown;
 }
 
+// 修复错误3：将Record<string, any>改为Record<string, unknown>（避免显式any）
 // 模型训练配置
 export interface YYC3ModelTrainingConfig {
-  algorithm: string
-  hyperparameters: Record<string, any>
-  epochs: number
-  batchSize: number
-  learningRate: number
-  optimizationGoal: 'accuracy' | 'speed' | 'size'
+  algorithm: string;
+  hyperparameters: Record<string, unknown>;
+  epochs: number;
+  batchSize: number;
+  learningRate: number;
+  optimizationGoal: 'accuracy' | 'speed' | 'size';
 }
 
 // 数据增强
 export interface YYC3DataAugmentation {
-  enabled: boolean
-  techniques: YYC3AugmentationTechnique[]
-  multiplier: number
+  enabled: boolean;
+  techniques: YYC3AugmentationTechnique[];
+  multiplier: number;
 }
 
+// 修复错误4：将Record<string, any>改为Record<string, unknown>（避免显式any）
 // 增强技术
 export interface YYC3AugmentationTechnique {
-  type: string
-  parameters: Record<string, any>
-  probability: number
+  type: string;
+  parameters: Record<string, unknown>;
+  probability: number;
 }
 
 // 训练结果
 export interface YYC3TrainingResult {
-  modelId: string
-  status: YYC3TrainingStatus
-  metrics: YYC3ModelMetrics
-  artifacts: YYC3ModelArtifacts
-  duration: number
+  modelId: string;
+  status: YYC3TrainingStatus;
+  metrics: YYC3ModelMetrics;
+  artifacts: YYC3ModelArtifacts;
+  duration: number;
 }
 
 // 训练状态
@@ -334,117 +343,117 @@ export enum YYC3TrainingStatus {
 
 // 模型指标
 export interface YYC3ModelMetrics {
-  accuracy: number
-  precision: number
-  recall: number
-  f1Score: number
-  loss: number
-  validationLoss: number
+  accuracy: number;
+  precision: number;
+  recall: number;
+  f1Score: number;
+  loss: number;
+  validationLoss: number;
 }
 
 // 模型文件
 export interface YYC3ModelArtifacts {
-  modelFile: string
-  configFile: string
-  vocabularyFile?: string
-  checkpoints: string[]
-  logs: string[]
+  modelFile: string;
+  configFile: string;
+  vocabularyFile?: string;
+  checkpoints: string[];
+  logs: string[];
 }
 
 // 模型信息
 export interface YYC3ModelInfo {
-  id: string
-  name: string
-  version: string
-  description: string
-  capabilities: string[]
-  performance: YYC3ModelMetrics
-  requirements: YYC3ModelRequirements
-  deployment: YYC3DeploymentInfo
+  id: string;
+  name: string;
+  version: string;
+  description: string;
+  capabilities: string[];
+  performance: YYC3ModelMetrics;
+  requirements: YYC3ModelRequirements;
+  deployment: YYC3DeploymentInfo;
 }
 
 // 模型要求
 export interface YYC3ModelRequirements {
-  memory: number  // MB
-  cpu: number     // cores
-  gpu?: number    // GB VRAM
-  storage: number // GB
-  bandwidth?: number // Mbps
+  memory: number;  // MB
+  cpu: number;     // cores
+  gpu?: number;    // GB VRAM
+  storage: number; // GB
+  bandwidth?: number; // Mbps
 }
 
 // 部署信息
 export interface YYC3DeploymentInfo {
-  status: 'deployed' | 'deploying' | 'stopped' | 'failed'
-  endpoint: string
-  region: string
-  instances: number
-  lastUpdated: Date
+  status: 'deployed' | 'deploying' | 'stopped' | 'failed';
+  endpoint: string;
+  region: string;
+  instances: number;
+  lastUpdated: Date;
 }
 
 // 数据同步服务接口
 export interface YYC3CloudDataSync {
-  upload(data: YYC3SyncData): Promise<YYC3CloudResponse<YYC3SyncResult>>
-  download(syncId: string): Promise<YYC3CloudResponse<YYC3SyncData>>
-  synchronize(): Promise<YYC3CloudResponse<YYC3SyncStatus>>
-  getConflicts(): Promise<YYC3CloudResponse<YYC3SyncConflict[]>>
-  resolveConflict(conflictId: string, resolution: YYC3ConflictResolution): Promise<YYC3CloudResponse<void>>
+  upload(data: YYC3SyncData): Promise<YYC3CloudResponse<YYC3SyncResult>>;
+  download(syncId: string): Promise<YYC3CloudResponse<YYC3SyncData>>;
+  synchronize(): Promise<YYC3CloudResponse<YYC3SyncStatus>>;
+  getConflicts(): Promise<YYC3CloudResponse<YYC3SyncConflict[]>>;
+  resolveConflict(conflictId: string, resolution: YYC3ConflictResolution): Promise<YYC3CloudResponse<void>>;
 }
 
 // 同步数据
 export interface YYC3SyncData {
-  id: string
-  type: 'user_data' | 'model_data' | 'config_data' | 'analytics_data'
-  payload: any
-  timestamp: Date
-  checksum: string
-  metadata: YYC3SyncMetadata
+  id: string;
+  type: 'user_data' | 'model_data' | 'config_data' | 'analytics_data';
+  payload: unknown;
+  timestamp: Date;
+  checksum: string;
+  metadata: YYC3SyncMetadata;
 }
 
 // 同步元数据
 export interface YYC3SyncMetadata {
-  userId?: string
-  deviceId: string
-  version: number
-  priority: number
-  ttl?: number  // seconds
+  userId?: string;
+  deviceId: string;
+  version: number;
+  priority: number;
+  ttl?: number;  // seconds
 }
 
 // 同步结果
 export interface YYC3SyncResult {
-  syncId: string
-  status: 'success' | 'conflict' | 'error'
-  timestamp: Date
-  conflicts?: YYC3SyncConflict[]
+  syncId: string;
+  status: 'success' | 'conflict' | 'error';
+  timestamp: Date;
+  conflicts?: YYC3SyncConflict[];
 }
 
 // 同步状态
 export interface YYC3SyncStatus {
-  lastSync: Date
-  pendingUploads: number
-  pendingDownloads: number
-  conflicts: number
-  totalSize: number
+  lastSync: Date;
+  pendingUploads: number;
+  pendingDownloads: number;
+  conflicts: number;
+  totalSize: number;
 }
 
 // 同步冲突
 export interface YYC3SyncConflict {
-  id: string
-  dataId: string
-  localVersion: YYC3SyncData
-  remoteVersion: YYC3SyncData
-  conflictType: 'content' | 'timestamp' | 'version'
+  id: string;
+  dataId: string;
+  localVersion: YYC3SyncData;
+  remoteVersion: YYC3SyncData;
+  conflictType: 'content' | 'timestamp' | 'version';
 }
 
 // 冲突解决方案
 export interface YYC3ConflictResolution {
-  strategy: 'local_wins' | 'remote_wins' | 'merge' | 'manual'
-  mergedData?: any
+  strategy: 'local_wins' | 'remote_wins' | 'merge' | 'manual';
+  mergedData?: unknown;
 }
 
 // 云层抽象基类
 export abstract class YYC3CloudBase {
-  protected brandId: string = 'YYC3'
-  protected layer: string = 'cloud'
+  protected brandId: string = 'YYC3';
+  protected layer: string = 'cloud';
   
   constructor(
     protected client: YYC3CloudClient
@@ -454,15 +463,15 @@ export abstract class YYC3CloudBase {
   abstract call<T>(
     endpoint: string,
     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
-    data?: any,
+    data?: unknown,
     headers?: Record<string, string>
-  ): Promise<YYC3CloudResponse<T>>
+  ): Promise<YYC3CloudResponse<T>>;
   
   // 抽象方法：处理认证
-  abstract authenticate(): Promise<boolean>
+  abstract authenticate(): Promise<boolean>;
   
   // 抽象方法：刷新令牌
-  abstract refreshAuthentication(): Promise<boolean>
+  abstract refreshAuthentication(): Promise<boolean>;
   
   // 通用方法：构建请求头
   protected buildHeaders(additionalHeaders?: Record<string, string>): Record<string, string> {
@@ -472,14 +481,14 @@ export abstract class YYC3CloudBase {
       'Accept': 'application/json',
       'X-YYC3-Version': '1.0',
       'X-YYC3-Brand': 'YYC3'
-    }
+    };
     
     // 添加认证头
     if (this.client.authentication.type === YYC3AuthType.API_KEY) {
-      baseHeaders['Authorization'] = `Bearer ${this.client.authentication.credentials.apiKey}`
+      baseHeaders['Authorization'] = `Bearer ${this.client.authentication.credentials.apiKey}`;
     }
     
-    return { ...baseHeaders, ...(additionalHeaders || {}) }
+    return { ...baseHeaders, ...(additionalHeaders || {}) };
   }
   
   // 通用方法：处理重试逻辑
@@ -487,37 +496,40 @@ export abstract class YYC3CloudBase {
     operation: () => Promise<T>,
     maxAttempts: number = this.client.config.retryAttempts
   ): Promise<T> {
-    let lastError: Error
+    let lastError: Error;
     
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        return await operation()
+        return await operation();
       } catch (error) {
-        lastError = error as Error
+        lastError = error as Error;
         
         if (attempt === maxAttempts || !this.isRetryable(error)) {
-          break
+          break;
         }
         
-        const delay = this.client.config.retryDelay * Math.pow(2, attempt - 1)
-        await new Promise(resolve => setTimeout(resolve, delay))
+        const delay = this.client.config.retryDelay * Math.pow(2, attempt - 1);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
     
-    throw lastError!
+    throw lastError!;
   }
   
+  // 修复错误5/6：给error加类型断言，明确可能存在code属性（解决“类型{}不存在code”问题）
   // 通用方法：判断是否可重试
-  protected isRetryable(error: any): boolean {
-    if (error?.code) {
+  protected isRetryable(error: unknown): boolean {
+    // 断言error为可能包含code属性的类型
+    const errorWithCode = error as { code?: YYC3CloudErrorCode };
+    if (errorWithCode?.code) {
       const nonRetryableCodes = [
         YYC3CloudErrorCode.AUTHENTICATION_FAILED,
         YYC3CloudErrorCode.AUTHORIZATION_FAILED,
         YYC3CloudErrorCode.INVALID_REQUEST
-      ]
-      return !nonRetryableCodes.includes(error.code)
+      ];
+      return !nonRetryableCodes.includes(errorWithCode.code);
     }
-    return true
+    return true;
   }
 }
 
@@ -537,9 +549,9 @@ export const YYC3_CLOUD_CONSTANTS = {
     PREMIUM: 10000,
     ENTERPRISE: 100000
   }
-}
+};
 
 // 导出类型联合
-export type YYC3CloudTypes = YYC3CloudClient | YYC3CloudResponse | YYC3CloudConfig
-export type YYC3CloudServiceTypes = YYC3CloudAIService | YYC3CloudDataSync
-export type YYC3CloudDataTypes = YYC3SyncData | YYC3TrainingData | YYC3Dataset
+export type YYC3CloudTypes = YYC3CloudClient | YYC3CloudResponse | YYC3CloudConfig;
+export type YYC3CloudServiceTypes = YYC3CloudAIService | YYC3CloudDataSync;
+export type YYC3CloudDataTypes = YYC3SyncData | YYC3TrainingData | YYC3Dataset;

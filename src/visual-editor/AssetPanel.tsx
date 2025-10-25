@@ -1,13 +1,31 @@
-import React, { useState } from "react"
+import * as React from 'react'
+import { useState } from 'react'
 import { DraggableAsset } from "./DraggableAsset"
 
+// 与DraggableAsset.ts保持一致的Asset接口定义
+export interface Asset {
+  name: string;
+  id?: string;
+  type?: string;
+  [key: string]: string | number | boolean | object | undefined;
+}
+
+interface Scene {
+  name: string;
+  components?: Asset[];
+}
+
+interface ScenesMap {
+  [key: string]: Scene;
+}
+
 export interface AssetPanelProps {
-  assets: any[]
+  assets: Asset[]
 }
 
 export const AssetPanel: React.FC<AssetPanelProps> = ({ assets }) => {
-  const [showAI, setShowAI] = useState(false)
-  const [selectedScene, setSelectedScene] = useState("form")
+  const [showAI, setShowAI] = useState<boolean>(false)
+  const [selectedScene, setSelectedScene] = useState<string>("form")
   
   // 教育场景化AI推荐（根据教育阶段优化）
   const getEducationScenes = () => {
@@ -78,7 +96,7 @@ export const AssetPanel: React.FC<AssetPanelProps> = ({ assets }) => {
     }
   }
   
-  const currentScenes = getEducationScenes()
+  const currentScenes = getEducationScenes() as ScenesMap;
   const currentRecommend = currentScenes[selectedScene]?.components || []
   return (
     <aside className="w-64 min-w-[180px] bg-gradient-to-b from-blue-50 to-blue-100 border-r p-4 flex flex-col gap-4 rounded-r-2xl shadow-lg">
@@ -116,7 +134,7 @@ export const AssetPanel: React.FC<AssetPanelProps> = ({ assets }) => {
             <div className="mb-4">
               <h4 className="font-semibold mb-2 text-gray-800">推荐组件：</h4>
               <div className="grid grid-cols-2 gap-2">
-                {currentRecommend.map((item, idx) => (
+                {currentRecommend.map((item: { name: string }, idx: number) => (
                   <div key={idx} className="bg-purple-50 border border-purple-200 rounded px-2 py-1 text-sm text-purple-700 font-medium">
                     {item.name}
                   </div>

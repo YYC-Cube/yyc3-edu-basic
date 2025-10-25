@@ -1,0 +1,33 @@
+# 基础配置（所有环境共享）
+database:
+  driver: "postgres"
+  pool_size: 20
+  max_overflow: 10
+
+redis:
+  db: 0
+  socket_timeout: 5
+  retry_on_timeout: true
+  max_connections: 100
+
+neo4j:
+  connection_timeout: 30
+  max_transaction_retry_time: 10
+
+model:
+  path: "./models/saved_models/"
+  batch_size: 32
+  epochs: 50
+  early_stopping_patience: 10
+
+service:
+  worker_count: 4
+  max_request_size: 1048576  # 1MB
+  timeout: 30
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file_path: "./logs/learning_path.log"
+  rotation: "1 day"
+  retention: "30 days"

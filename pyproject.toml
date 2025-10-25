@@ -1,0 +1,8 @@
+[tool.basedpyright]
+typeCheckingMode = "basic"  # 先从 basic 开始，逐步治理后切到 strict
+pythonVersion = "3.11"
+include = ["docs/学习组件/**/*.py"]
+exclude = ["**/__pycache__/**", "**/.venv/**", "**/.tox/**"]
+# venvPath/venv 可按需填写你的虚拟环境位置；如未使用可移除
+# venvPath = "."
+# venv = ".venv"

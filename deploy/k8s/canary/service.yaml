@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: education-platform-canary-svc
+  namespace: education-platform
+  labels:
+    app: education-platform
+    track: canary
+spec:
+  type: ClusterIP
+  selector:
+    app: education-platform
+    track: canary
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000

@@ -1,9 +1,10 @@
-import React from "react"
+import React from 'react'
+import { CanvasItem } from './VisualEditor'
 
 export interface PropertyPanelProps {
-  selectedAsset: any | null
-  canvasData: any[]
-  setCanvasData: (data: any[]) => void
+  selectedAsset: CanvasItem | null
+  canvasData: CanvasItem[]
+  setCanvasData: (data: CanvasItem[]) => void
 }
 
 export const PropertyPanel: React.FC<PropertyPanelProps> = ({ selectedAsset, canvasData, setCanvasData }) => {

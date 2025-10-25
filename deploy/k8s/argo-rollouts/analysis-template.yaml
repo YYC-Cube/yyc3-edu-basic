@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+  namespace: education-platform
+spec:
+  metrics:
+    - name: http-success-rate
+      interval: 30s
+      count: 3
+      successCondition: result[0] >= 0.95
+      failureCondition: result[0] < 0.90
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local
+          query: |
+            sum(rate(http_requests_total{job="education-platform",status=~"2.."}[1m]))
+            /
+            sum(rate(http_requests_total{job="education-platform"}[1m]))

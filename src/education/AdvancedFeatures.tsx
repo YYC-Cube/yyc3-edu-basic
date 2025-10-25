@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react"
-import { Button } from "../components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { Badge } from "../components/ui/badge"
+import React, { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
 // Gamification 游戏化学习系统
 export const GamificationSystem: React.FC<{
@@ -24,7 +24,8 @@ export const GamificationSystem: React.FC<{
     ]
   })
 
-  const [leaderboard, setLeaderboard] = useState([
+  type LeaderboardEntry = { rank: number; name: string; level: number; xp: number; avatar: string; isMe?: boolean }
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([
     { rank: 1, name: "小明", level: 8, xp: 4200, avatar: "👦" },
     { rank: 2, name: "小红", level: 7, xp: 3800, avatar: "👧" },
     { rank: 3, name: "小李", level: 6, xp: 3200, avatar: "👨" },
@@ -56,9 +57,12 @@ export const GamificationSystem: React.FC<{
         <h3 className="text-xl font-bold text-purple-700 flex items-center gap-2">
           🎮 游戏化学习中心
         </h3>
-        <Button variant="outline" size="sm">
-          📊 详细统计
-        </Button>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-500">ID: {userId} · 身份: {isStudent ? '学生' : '老师'}</span>
+          <Button variant="outline" size="sm">📊 详细统计</Button>
+          <Button size="sm" onClick={() => setUserStats(s => ({ ...s, xp: s.xp + 50 }))}>✅ 签到 +50XP</Button>
+          <Button size="sm" variant="outline" onClick={() => setLeaderboard(list => list.map(u => u.isMe ? { ...u, xp: u.xp + 100 } : u))}>🔁 刷新排名</Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -151,7 +155,7 @@ export const GamificationSystem: React.FC<{
                       {quest.completed ? (
                         <Badge className="bg-green-100 text-green-800">已完成</Badge>
                       ) : (
-                        <Button size="sm" variant="outline">开始</Button>
+                        <Button size="sm" variant="outline" onClick={() => setDailyQuests(qs => qs.map(q => q.id === quest.id ? { ...q, progress: q.target, completed: true } : q))}>开始</Button>
                       )}
                     </div>
                   </div>
@@ -172,15 +176,6 @@ export const GamificationSystem: React.FC<{
               <h4 className="font-bold text-lg mb-2">{weeklyChallenge.title}</h4>
               <p className="text-gray-600 mb-3">{weeklyChallenge.description}</p>
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-32 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-500 h-2 rounded-full"
-                      style={{ width: `${weeklyChallenge.progress}%` }}
-                    />
-                  </div>
-                  <span className="text-sm text-gray-600">{weeklyChallenge.progress}%</span>
-                </div>
                 <div className="text-sm text-gray-500">
                   {weeklyChallenge.participants} 人参与
                 </div>
@@ -189,9 +184,8 @@ export const GamificationSystem: React.FC<{
                 <div className="text-sm font-medium text-purple-600">
                   奖励: {weeklyChallenge.reward}
                 </div>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  继续挑战
-                </Button>
+                <Button className="bg-blue-600 hover:bg-blue-700">继续挑战</Button>
+                <Button size="sm" variant="outline" onClick={() => setWeeklyChallenge(w => ({ ...w, participants: w.participants + 1 }))}>报名参加</Button>
               </div>
             </CardContent>
           </Card>
@@ -279,6 +273,7 @@ export const SmartRecommendation: React.FC<{
   const [preferences, setPreferences] = useState({
     difficulty: "适中",
     duration: "30分钟",
+    style: "视觉型",
     topics: ["数学", "编程基础", "可视化"]
   })
 
@@ -286,9 +281,11 @@ export const SmartRecommendation: React.FC<{
     <div className="bg-white rounded-xl shadow-lg p-6 mb-4">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-bold text-blue-700">🎯 智能推荐系统</h3>
-        <Button variant="outline" size="sm">
-          ⚙️ 设置偏好
-        </Button>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">学段：{userLevel} · 学科：{subject} · 学习风格：{learningStyle}</span>
+          <Button variant="outline" size="sm">⚙️ 设置偏好</Button>
+          <Button size="sm" onClick={() => setRecommendations(recs => [...recs].reverse())}>🔄 刷新推荐</Button>
+        </div>
       </div>
 
       {/* 推荐列表 */}
@@ -338,7 +335,7 @@ export const SmartRecommendation: React.FC<{
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">难度偏好</label>
-            <select className="w-full p-2 border rounded text-sm">
+            <select className="w-full p-2 border rounded text-sm" value={preferences.difficulty} onChange={(e) => setPreferences(p => ({ ...p, difficulty: e.target.value }))}>
               <option>简单</option>
               <option>适中</option>
               <option>困难</option>
@@ -346,7 +343,7 @@ export const SmartRecommendation: React.FC<{
           </div>
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">学习时长</label>
-            <select className="w-full p-2 border rounded text-sm">
+            <select className="w-full p-2 border rounded text-sm" value={preferences.duration} onChange={(e) => setPreferences(p => ({ ...p, duration: e.target.value }))}>
               <option>15分钟</option>
               <option>30分钟</option>
               <option>60分钟以上</option>
@@ -354,7 +351,7 @@ export const SmartRecommendation: React.FC<{
           </div>
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">学习风格</label>
-            <select className="w-full p-2 border rounded text-sm">
+            <select className="w-full p-2 border rounded text-sm" value={preferences.style} onChange={(e) => setPreferences(p => ({ ...p, style: e.target.value }))}>
               <option>视觉型</option>
               <option>操作型</option>
               <option>理论型</option>
@@ -452,6 +449,7 @@ export const MultiLanguageSupport: React.FC = () => {
             </ul>
           </div>
         </div>
+        <div className="mt-4 text-sm text-gray-700">{translations[currentLanguage]?.welcome}</div>
       </div>
     </div>
   )

@@ -1,0 +1,105 @@
+name: Kubernetes Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: "Container image to deploy (e.g., ghcr.io/owner/repo:tag)"
+        required: true
+        type: string
+      host:
+        description: "Ingress host (e.g., app.example.com)"
+        required: true
+        type: string
+      strategy:
+        description: "Deploy strategy: rolling | canary | bluegreen"
+        required: true
+        default: rolling
+        type: choice
+        options:
+          - rolling
+          - canary
+          - bluegreen
+      canaryWeight:
+        description: "Canary traffic weight (0-100)"
+        required: false
+        default: "10"
+        type: string
+      blueTarget:
+        description: "Blue-Green active target: blue | green"
+        required: false
+        default: blue
+        type: choice
+        options:
+          - blue
+          - green
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: ${{ inputs.image }}
+      HOST: ${{ inputs.host }}
+      STRATEGY: ${{ inputs.strategy }}
+      CANARY_WEIGHT: ${{ inputs.canaryWeight }}
+      BLUE_TARGET: ${{ inputs.blueTarget }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl apply -f deploy/k8s/base/namespace.yaml
+
+      - name: Apply base Service and Ingress
+        run: |
+          sed -e "s/INGRESS_HOST_PLACEHOLDER/${HOST}/g" deploy/k8s/base/ingress.yaml | kubectl apply -f -
+          kubectl apply -f deploy/k8s/base/service.yaml
+
+      - name: Rolling update (default)
+        if: env.STRATEGY == 'rolling'
+        run: |
+          # Ensure Deployment exists (first-time deploy)
+          sed -e "s#IMAGE_PLACEHOLDER#${IMAGE}#g" deploy/k8s/base/deployment.yaml | kubectl apply -f -
+          # Update image for subsequent rollouts
+          kubectl set image deployment/education-platform education-platform=${IMAGE} -n education-platform
+          kubectl rollout status deployment/education-platform -n education-platform --timeout=120s
+
+      - name: Canary rollout
+        if: env.STRATEGY == 'canary'
+        run: |
+          # Apply stable deployment if not exists
+          sed -e "s#IMAGE_PLACEHOLDER#${IMAGE}#g" deploy/k8s/base/deployment.yaml | kubectl apply -f -
+          kubectl rollout status deployment/education-platform -n education-platform --timeout=120s
+          # Apply canary deployment and service
+          sed -e "s#IMAGE_PLACEHOLDER#${IMAGE}#g" deploy/k8s/canary/deployment.yaml | kubectl apply -f -
+          kubectl apply -f deploy/k8s/canary/service.yaml
+          # Apply canary ingress with weight
+          sed -e "s/INGRESS_HOST_PLACEHOLDER/${HOST}/g" -e "s/CANARY_WEIGHT_PLACEHOLDER/${CANARY_WEIGHT}/g" deploy/k8s/canary/ingress-canary.yaml | kubectl apply -f -
+          kubectl rollout status deployment/education-platform-canary -n education-platform --timeout=120s
+
+      - name: Blue-Green deploy
+        if: env.STRATEGY == 'bluegreen'
+        run: |
+          # Apply both blue and green deployments
+          sed -e "s#IMAGE_PLACEHOLDER#${IMAGE}#g" deploy/k8s/bluegreen/deployment-blue.yaml | kubectl apply -f -
+          sed -e "s#IMAGE_PLACEHOLDER#${IMAGE}#g" deploy/k8s/bluegreen/deployment-green.yaml | kubectl apply -f -
+          # Service selects active color
+          kubectl apply -f deploy/k8s/bluegreen/service.yaml
+          kubectl patch service education-platform-svc -n education-platform \
+            --type='merge' -p "{\"spec\":{\"selector\":{\"app\":\"education-platform\",\"version\":\"${BLUE_TARGET}\"}}}"
+          kubectl rollout status deployment/education-platform-${BLUE_TARGET} -n education-platform --timeout=120s

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { Palette, Volume2, Vibrate, Eye, Lightbulb, Settings } from 'lucide-react'
+import { Palette, Volume2, Vibrate, Eye, Lightbulb } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
@@ -83,7 +83,7 @@ export const EmotionFeedback: React.FC<EmotionFeedbackProps> = ({
   const [visualPreview, setVisualPreview] = useState('')
 
   // 更新配置
-  const updateConfig = (category: keyof FeedbackConfig, key: string, value: any) => {
+  const updateConfig = (category: keyof FeedbackConfig, key: string, value: unknown) => {
     const newConfig = {
       ...config,
       [category]: {
@@ -127,7 +127,7 @@ export const EmotionFeedback: React.FC<EmotionFeedbackProps> = ({
   }
 
   // 触觉反馈模式
-  const getHapticPattern = (emotion: string, intensity: number) => {
+  const getHapticPattern = (emotion: string) => {
     const patterns = {
       happy: '轻快脉动',
       excited: '强烈震动',
@@ -229,4 +229,229 @@ export const EmotionFeedback: React.FC<EmotionFeedbackProps> = ({
                       value={((currentEmotion.valence + 1) / 2) * 100} 
                       className="h-2 mt-1" 
                     />
-                    <div className="text-xs mt-1">{currentEmotion.valence > 0 ? '正面' : '负面'}</div>\n                  </div>\n                  \n                  <div className=\"text-center\">\n                    <div className=\"text-sm text-gray-500\">唤醒度</div>\n                    <Progress value={currentEmotion.arousal * 100} className=\"h-2 mt-1\" />\n                    <div className=\"text-xs mt-1\">{currentEmotion.arousal > 0.5 ? '兴奋' : '平静'}</div>\n                  </div>\n                </div>\n              </div>\n            </div>\n            \n            <div className=\"flex justify-center\">\n              <Button onClick={startFeedbackDemo} disabled={feedbackActive}>\n                {feedbackActive ? '反馈演示中...' : '启动情感反馈演示'}\n              </Button>\n            </div>\n          </div>\n        </CardContent>\n      </Card>\n\n      {/* 视觉反馈配置 */}\n      <Card>\n        <CardHeader>\n          <CardTitle className=\"flex items-center gap-2\">\n            <Eye className=\"text-blue-500\" />\n            视觉反馈设置\n          </CardTitle>\n        </CardHeader>\n        <CardContent className=\"space-y-4\">\n          <div className=\"flex items-center justify-between\">\n            <Label>启用视觉反馈</Label>\n            <Switch \n              checked={config.visual.enabled}\n              onCheckedChange={(checked) => updateConfig('visual', 'enabled', checked)}\n            />\n          </div>\n          \n          <div className=\"space-y-2\">\n            <Label>色彩强度: {config.visual.colorIntensity}%</Label>\n            <Slider\n              value={[config.visual.colorIntensity]}\n              onValueChange={([value]) => updateConfig('visual', 'colorIntensity', value)}\n              max={100}\n              step={1}\n              disabled={!config.visual.enabled}\n            />\n          </div>\n          \n          <div className=\"space-y-2\">\n            <Label>动画速度: {config.visual.animationSpeed}%</Label>\n            <Slider\n              value={[config.visual.animationSpeed]}\n              onValueChange={([value]) => updateConfig('visual', 'animationSpeed', value)}\n              max={100}\n              step={1}\n              disabled={!config.visual.enabled}\n            />\n          </div>\n          \n          <div className=\"flex items-center justify-between\">\n            <Label>粒子效果</Label>\n            <Switch \n              checked={config.visual.particleEffects}\n              onCheckedChange={(checked) => updateConfig('visual', 'particleEffects', checked)}\n              disabled={!config.visual.enabled}\n            />\n          </div>\n        </CardContent>\n      </Card>\n\n      {/* 音频反馈配置 */}\n      <Card>\n        <CardHeader>\n          <CardTitle className=\"flex items-center gap-2\">\n            <Volume2 className=\"text-green-500\" />\n            音频反馈设置\n          </CardTitle>\n        </CardHeader>\n        <CardContent className=\"space-y-4\">\n          <div className=\"flex items-center justify-between\">\n            <Label>启用音频反馈</Label>\n            <Switch \n              checked={config.audio.enabled}\n              onCheckedChange={(checked) => updateConfig('audio', 'enabled', checked)}\n            />\n          </div>\n          \n          <div className=\"space-y-2\">\n            <Label>音量: {config.audio.volume}%</Label>\n            <Slider\n              value={[config.audio.volume]}\n              onValueChange={([value]) => updateConfig('audio', 'volume', value)}\n              max={100}\n              step={1}\n              disabled={!config.audio.enabled}\n            />\n          </div>\n          \n          <div className=\"flex items-center justify-between\">\n            <Label>空间音效</Label>\n            <Switch \n              checked={config.audio.spatialAudio}\n              onCheckedChange={(checked) => updateConfig('audio', 'spatialAudio', checked)}\n              disabled={!config.audio.enabled}\n            />\n          </div>\n          \n          <div className=\"flex items-center justify-between\">\n            <Label>自适应均衡器</Label>\n            <Switch \n              checked={config.audio.adaptiveEQ}\n              onCheckedChange={(checked) => updateConfig('audio', 'adaptiveEQ', checked)}\n              disabled={!config.audio.enabled}\n            />\n          </div>\n          \n          <div className=\"p-3 bg-gray-50 rounded-lg\">\n            <div className=\"text-sm font-medium mb-2\">当前音频配置:</div>\n            <div className=\"text-xs space-y-1\">\n              {(() => {\n                const audioProfile = generateAudioFeedback(currentEmotion)\n                return (\n                  <>\n                    <div>音调: {audioProfile.frequency}</div>\n                    <div>节拍: {audioProfile.tempo}</div>\n                    <div>乐器: {audioProfile.instruments.join(', ')}</div>\n                  </>\n                )\n              })()}\n            </div>\n          </div>\n        </CardContent>\n      </Card>\n\n      {/* 触觉反馈配置 */}\n      <Card>\n        <CardHeader>\n          <CardTitle className=\"flex items-center gap-2\">\n            <Vibrate className=\"text-purple-500\" />\n            触觉反馈设置\n          </CardTitle>\n        </CardHeader>\n        <CardContent className=\"space-y-4\">\n          <div className=\"flex items-center justify-between\">\n            <Label>启用触觉反馈</Label>\n            <Switch \n              checked={config.haptic.enabled}\n              onCheckedChange={(checked) => updateConfig('haptic', 'enabled', checked)}\n            />\n          </div>\n          \n          <div className=\"space-y-2\">\n            <Label>震动强度: {config.haptic.intensity}%</Label>\n            <Slider\n              value={[config.haptic.intensity]}\n              onValueChange={([value]) => updateConfig('haptic', 'intensity', value)}\n              max={100}\n              step={1}\n              disabled={!config.haptic.enabled}\n            />\n          </div>\n          \n          <div className=\"space-y-2\">\n            <Label>震动模式</Label>\n            <div className=\"flex gap-2\">\n              {(['subtle', 'standard', 'strong'] as const).map((pattern) => (\n                <Button\n                  key={pattern}\n                  variant={config.haptic.pattern === pattern ? 'default' : 'outline'}\n                  size=\"sm\"\n                  onClick={() => updateConfig('haptic', 'pattern', pattern)}\n                  disabled={!config.haptic.enabled}\n                >\n                  {pattern === 'subtle' ? '轻微' : pattern === 'standard' ? '标准' : '强烈'}\n                </Button>\n              ))}\n            </div>\n          </div>\n          \n          <div className=\"p-3 bg-gray-50 rounded-lg\">\n            <div className=\"text-sm font-medium mb-1\">当前触觉模式:</div>\n            <div className=\"text-xs\">\n              {getHapticPattern(currentEmotion.primary, currentEmotion.intensity)}\n            </div>\n          </div>\n        </CardContent>\n      </Card>\n\n      {/* 环境氛围配置 */}\n      <Card>\n        <CardHeader>\n          <CardTitle className=\"flex items-center gap-2\">\n            <Lightbulb className=\"text-yellow-500\" />\n            环境氛围设置\n          </CardTitle>\n        </CardHeader>\n        <CardContent className=\"space-y-4\">\n          <div className=\"flex items-center justify-between\">\n            <Label>智能光线适配</Label>\n            <Switch \n              checked={config.ambient.lightAdaptation}\n              onCheckedChange={(checked) => updateConfig('ambient', 'lightAdaptation', checked)}\n            />\n          </div>\n          \n          <div className=\"flex items-center justify-between\">\n            <Label>温度同步</Label>\n            <Switch \n              checked={config.ambient.temperatureSync}\n              onCheckedChange={(checked) => updateConfig('ambient', 'temperatureSync', checked)}\n            />\n          </div>\n          \n          <div className=\"flex items-center justify-between\">\n            <Label>香氛疗法</Label>\n            <Switch \n              checked={config.ambient.aromatherapy}\n              onCheckedChange={(checked) => updateConfig('ambient', 'aromatherapy', checked)}\n            />\n          </div>\n        </CardContent>\n      </Card>\n    </div>\n  )\n}
+                    <div className="text-xs mt-1">{currentEmotion.valence > 0 ? '正面' : '负面'}</div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="text-sm text-gray-500">唤醒度</div>
+                    <Progress value={currentEmotion.arousal * 100} className="h-2 mt-1" />
+                    <div className="text-xs mt-1">{currentEmotion.arousal > 0.5 ? '兴奋' : '平静'}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-center">
+              <Button onClick={startFeedbackDemo} disabled={feedbackActive}>
+                {feedbackActive ? '反馈演示中...' : '启动情感反馈演示'}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 视觉反馈配置 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Eye className="text-blue-500" />
+            视觉反馈设置
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label>启用视觉反馈</Label>
+            <Switch 
+              checked={config.visual.enabled}
+              onCheckedChange={(checked) => updateConfig('visual', 'enabled', checked)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>色彩强度: {config.visual.colorIntensity}%</Label>
+            <Slider
+              value={[config.visual.colorIntensity]}
+              onValueChange={([value]) => updateConfig('visual', 'colorIntensity', value)}
+              max={100}
+              step={1}
+              disabled={!config.visual.enabled}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>动画速度: {config.visual.animationSpeed}%</Label>
+            <Slider
+              value={[config.visual.animationSpeed]}
+              onValueChange={([value]) => updateConfig('visual', 'animationSpeed', value)}
+              max={100}
+              step={1}
+              disabled={!config.visual.enabled}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Label>粒子效果</Label>
+            <Switch 
+              checked={config.visual.particleEffects}
+              onCheckedChange={(checked) => updateConfig('visual', 'particleEffects', checked)}
+              disabled={!config.visual.enabled}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 音频反馈配置 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Volume2 className="text-green-500" />
+            音频反馈设置
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label>启用音频反馈</Label>
+            <Switch 
+              checked={config.audio.enabled}
+              onCheckedChange={(checked) => updateConfig('audio', 'enabled', checked)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>音量: {config.audio.volume}%</Label>
+            <Slider
+              value={[config.audio.volume]}
+              onValueChange={([value]) => updateConfig('audio', 'volume', value)}
+              max={100}
+              step={1}
+              disabled={!config.audio.enabled}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Label>空间音效</Label>
+            <Switch 
+              checked={config.audio.spatialAudio}
+              onCheckedChange={(checked) => updateConfig('audio', 'spatialAudio', checked)}
+              disabled={!config.audio.enabled}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Label>自适应均衡器</Label>
+            <Switch 
+              checked={config.audio.adaptiveEQ}
+              onCheckedChange={(checked) => updateConfig('audio', 'adaptiveEQ', checked)}
+              disabled={!config.audio.enabled}
+            />
+          </div>
+          
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <div className="text-sm font-medium mb-2">当前音频配置:</div>
+            <div className="text-xs space-y-1">
+              {(() => {
+                const audioProfile = generateAudioFeedback(currentEmotion)
+                return (
+                  <>
+                    <div>音调: {audioProfile.frequency}</div>
+                    <div>节拍: {audioProfile.tempo}</div>
+                    <div>乐器: {audioProfile.instruments.join(', ')}</div>
+                  </>
+                )
+              })()}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 触觉反馈配置 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Vibrate className="text-purple-500" />
+            触觉反馈设置
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label>启用触觉反馈</Label>
+            <Switch 
+              checked={config.haptic.enabled}
+              onCheckedChange={(checked) => updateConfig('haptic', 'enabled', checked)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>震动强度: {config.haptic.intensity}%</Label>
+            <Slider
+              value={[config.haptic.intensity]}
+              onValueChange={([value]) => updateConfig('haptic', 'intensity', value)}
+              max={100}
+              step={1}
+              disabled={!config.haptic.enabled}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>震动模式</Label>
+            <div className="flex gap-2">
+              {(['subtle', 'standard', 'strong'] as const).map((pattern) => (
+                <Button
+                  key={pattern}
+                  variant={config.haptic.pattern === pattern ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => updateConfig('haptic', 'pattern', pattern)}
+                  disabled={!config.haptic.enabled}
+                >
+                  {pattern === 'subtle' ? '轻微' : pattern === 'standard' ? '标准' : '强烈'}
+                </Button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <div className="text-sm font-medium mb-1">当前触觉模式:</div>
+            <div className="text-xs">
+              {getHapticPattern(currentEmotion.primary)}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 环境氛围配置 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lightbulb className="text-yellow-500" />
+            环境氛围设置
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label>智能光线适配</Label>
+            <Switch 
+              checked={config.ambient.lightAdaptation}
+              onCheckedChange={(checked) => updateConfig('ambient', 'lightAdaptation', checked)}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Label>温度同步</Label>
+            <Switch 
+              checked={config.ambient.temperatureSync}
+              onCheckedChange={(checked) => updateConfig('ambient', 'temperatureSync', checked)}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Label>香氛疗法</Label>
+            <Switch 
+              checked={config.ambient.aromatherapy}
+              onCheckedChange={(checked) => updateConfig('ambient', 'aromatherapy', checked)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

@@ -9,7 +9,6 @@ import {
   Package, 
   Gauge, 
   AlertTriangle, 
-  CheckCircle, 
   RefreshCw,
   Play,
   Wrench,
@@ -24,7 +23,7 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
+// import { Separator } from '@/components/ui/separator'
 import { useGlobalAudit, AuditDimension, AuditSeverity, type AuditResult, type AuditIssue } from '@/hooks/use-global-audit'
 import { AuditReportViewer } from '@/components/audit-report-viewer'
 
@@ -181,7 +180,7 @@ function IssueItem({ issue, onFix }: IssueItemProps) {
 
 export default function GlobalAuditDashboard() {
   const { auditState, startGlobalAudit, applyAutoFixes, getOptimizationSuggestions } = useGlobalAudit()
-  const [selectedResult, setSelectedResult] = useState<AuditResult | null>(null)
+  const [, setSelectedResult] = useState<AuditResult | null>(null)
   const [activeTab, setActiveTab] = useState('overview')
 
   const optimizationSuggestions = getOptimizationSuggestions()

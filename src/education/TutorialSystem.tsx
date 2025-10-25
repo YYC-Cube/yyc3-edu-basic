@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
-import { Button } from "../components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { Progress } from "../components/ui/progress"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
 
 // 互动教程系统
 export const InteractiveTutorial: React.FC<{
@@ -11,9 +11,9 @@ export const InteractiveTutorial: React.FC<{
   const [currentStep, setCurrentStep] = useState(0)
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
   const [isPlaying, setIsPlaying] = useState(false)
-  const [tutorials, setTutorials] = useState<any[]>([])
+  const [tutorials, setTutorials] = useState<TutorialStep[]>([])
 
-  const tutorialTemplates = {
+  const tutorialTemplates: Record<string, TutorialStep[]> = {
     "可视化编程": [
       {
         id: 1,
@@ -77,7 +77,7 @@ export const InteractiveTutorial: React.FC<{
   }
 
   useEffect(() => {
-    const defaultTutorial = tutorialTemplates["可视化编程"] || []
+    const defaultTutorial = tutorialTemplates[subject] || tutorialTemplates["可视化编程"] || []
     setTutorials(defaultTutorial)
     setCurrentStep(0)
     setCompletedSteps([])
@@ -258,8 +258,8 @@ export const InteractiveTutorial: React.FC<{
 export const AchievementGallery: React.FC<{
   userId?: string
   isTeacher?: boolean
-}> = ({ userId, isTeacher }) => {
-  const [projects, setProjects] = useState([
+}> = ({ isTeacher }) => {
+  const [projects] = useState([
     {
       id: 1,
       title: "我的第一个计算器",

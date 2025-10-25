@@ -3,7 +3,7 @@
  * 提供完整的复用分析、配置生成、代码生成等工具
  */
 
-import { YYC3CoreConfig } from '../core/interfaces'
+// YYC3CoreConfig import removed as it's not being used
 
 // ==== 复用需求分析接口 ====
 
@@ -113,7 +113,7 @@ export interface IntegrationsConfig {
   thirdParty?: Array<{
     name: string
     type: string
-    config: Record<string, any>
+    config: Record<string, string | number | boolean | object | null | undefined>
   }>
 }
 
@@ -285,11 +285,26 @@ export class YYC3ReusabilityAnalyzer {
       ]
     }
 
-    if (approach in packages && typeof packages[approach] === 'object') {
-      return packages[approach][domain] || packages[approach]['education']
+    // 定义具体的包结构类型，避免使用any
+    interface PackageStructure {
+      [key: string]: { [domain: string]: string[] } | string[];
+    }
+    const packagesTyped = packages as PackageStructure;
+    
+    if (approach in packagesTyped) {
+      const approachData = packagesTyped[approach];
+      
+      // 检查是否为领域映射对象
+      if (approachData && typeof approachData === 'object' && !Array.isArray(approachData)) {
+        return approachData[domain] || approachData['education'] || [];
+      } else if (Array.isArray(approachData)) {
+        return approachData;
+      }
     }
     
-    return packages[approach] || packages['function-reuse']
+    // 获取默认值并确保返回string[]类型
+    const defaultPackages = packagesTyped['function-reuse'];
+    return Array.isArray(defaultPackages) ? defaultPackages : [];
   }
 
   private static getCustomizationLevel(customization: number): ReusabilityStrategy['customizationLevel'] {
@@ -300,7 +315,7 @@ export class YYC3ReusabilityAnalyzer {
     return 'extensive'
   }
 
-  private static estimateEffort(req: ProjectRequirements, approach: string): string {
+  private static estimateEffort(req: ProjectRequirements, approach: 'scene-reuse' | 'function-reuse' | 'component-reuse' | 'config-reuse' | 'hybrid'): string {
     const baseEfforts = {
       'scene-reuse': { min: 3, max: 14 },
       'function-reuse': { min: 7, max: 30 },
@@ -323,7 +338,7 @@ export class YYC3ReusabilityAnalyzer {
     return `${adjustedMin}-${adjustedMax} 天`
   }
 
-  private static assessRisk(req: ProjectRequirements, approach: string): ReusabilityStrategy['riskLevel'] {
+  private static assessRisk(req: ProjectRequirements, approach: 'scene-reuse' | 'function-reuse' | 'component-reuse' | 'config-reuse' | 'hybrid'): ReusabilityStrategy['riskLevel'] {
     let riskScore = 0
     
     // 高定制化增加风险
@@ -348,7 +363,7 @@ export class YYC3ReusabilityAnalyzer {
     return 'low'
   }
 
-  private static calculateROI(req: ProjectRequirements, approach: string): ReusabilityROI {
+  private static calculateROI(req: ProjectRequirements, approach: 'scene-reuse' | 'function-reuse' | 'component-reuse' | 'config-reuse' | 'hybrid'): ReusabilityROI {
     // 基础成本估算（人天）
     const baseCosts = {
       prototype: 20, small: 60, medium: 150, enterprise: 300, global: 600
@@ -455,14 +470,14 @@ export class YYC3ConfigGenerator {
         enabled: true,
         realtime: req.scale !== 'prototype',
         style: this.getVisualizationStyle(req.domain),
-        colors: req.compliance.includes('gdpr') ? 'accessible' : 'auto',
+        colors: (req.compliance.includes('gdpr') ? 'accessible' : 'auto') as VisualizationConfig['colors'],
         animations: req.userGroup !== 'elderly',
         responsiveDesign: true
       },
       analytics: {
         enabled: req.scale !== 'prototype',
-        provider: req.compliance.length > 0 ? 'internal' : 'google-analytics',
-        trackingLevel: req.domain === 'research' ? 'comprehensive' : 'detailed',
+        provider: (req.compliance.length > 0 ? 'internal' : 'google-analytics') as AnalyticsConfig['provider'],
+        trackingLevel: (req.domain === 'research' ? 'comprehensive' : 'detailed') as AnalyticsConfig['trackingLevel'],
         privacyMode: req.compliance.includes('gdpr') || req.compliance.includes('hipaa'),
         dataRetention: req.compliance.includes('hipaa') ? '7y' : '2y'
       }
@@ -691,8 +706,8 @@ bootstrap().catch(console.error)
   }
 
   private static generateAppComponent(req: ProjectRequirements, config: EmotionPlatformConfig): string {
-    let componentImports = []
-    let componentElements = []
+    const componentImports = []
+    const componentElements = []
 
     if (config.features.emotionDetection.enabled) {
       componentImports.push('YYC3EmotionDetector')
@@ -763,10 +778,10 @@ export function useCustom${req.domain.charAt(0).toUpperCase() + req.domain.slice
   } = useYYC3EmotionSound()
   
   const [isProcessing, setIsProcessing] = useState(false)
-  const [emotionHistory, setEmotionHistory] = useState<any[]>([])
+  const [emotionHistory, setEmotionHistory] = useState<unknown[]>([])
   
   // ${req.domain}领域特定的情感处理逻辑
-  const process${req.domain.charAt(0).toUpperCase() + req.domain.slice(1)}Emotion = useCallback(async (input: any) => {
+  const process${req.domain.charAt(0).toUpperCase() + req.domain.slice(1)}Emotion = useCallback(async (input: unknown) => {
     setIsProcessing(true)
     try {
       // 应用领域特定的预处理
@@ -801,12 +816,12 @@ export function useCustom${req.domain.charAt(0).toUpperCase() + req.domain.slice
 }
 
 // ${req.domain}领域特定的辅助函数
-async function preprocess${req.domain.charAt(0).toUpperCase() + req.domain.slice(1)}Input(input: any) {
+async function preprocess${req.domain.charAt(0).toUpperCase() + req.domain.slice(1)}Input(input: unknown) {
   // TODO: 实现${req.domain}特定的输入预处理逻辑
   return input
 }
 
-function apply${req.domain.charAt(0).toUpperCase() + req.domain.slice(1)}Rules(emotion: any) {
+function apply${req.domain.charAt(0).toUpperCase() + req.domain.slice(1)}Rules(emotion: unknown) {
   // TODO: 实现${req.domain}特定的情感处理规则
   return emotion
 }`
@@ -834,7 +849,7 @@ export class ${req.domain.charAt(0).toUpperCase() + req.domain.slice(1)}EmotionS
    * ${req.domain}领域特定的情感分析
    */
   async analyze${req.domain.charAt(0).toUpperCase() + req.domain.slice(1)}Emotion(
-    input: any, 
+    input: unknown, 
     context?: ${req.domain.charAt(0).toUpperCase() + req.domain.slice(1)}Context
   ): Promise<YYC3EmotionState> {
     // 应用${req.domain}特定的分析逻辑
@@ -1025,10 +1040,10 @@ async function promptRequirements(): Promise<ProjectRequirements> {
 
 function generateDefaultRequirements(options: CLIOptions): ProjectRequirements {
   return {
-    domain: (options.domain as any) || 'business',
+    domain: (options.domain as 'education' | 'healthcare' | 'business' | 'entertainment' | 'research') || 'business',
     userGroup: 'adults',
     interactions: ['text', 'voice'],
-    scale: (options.scale as any) || 'medium', 
+    scale: (options.scale as 'prototype' | 'small' | 'medium' | 'enterprise' | 'global') || 'medium', 
     timeline: 60,
     budget: 'medium',
     customization: 0.5,
@@ -1038,6 +1053,11 @@ function generateDefaultRequirements(options: CLIOptions): ProjectRequirements {
   }
 }
 
-async function writeProjectFiles(appName: string, files: Record<string, string>, outputDir?: string) {
+async function writeProjectFiles(_appName: string, _files: Record<string, string>, _outputDir?: string) {
   // TODO: 实现文件写入逻辑
+  // 参数将在未来实现中使用：_appName, _files, _outputDir
+  console.log(`准备为项目 ${_appName} 写入 ${Object.keys(_files).length} 个文件`);
+  if (_outputDir) {
+    console.log(`输出目录: ${_outputDir}`);
+  }
 }

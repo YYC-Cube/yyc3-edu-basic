@@ -236,13 +236,13 @@ export class YYC3ArchitectureException extends Error {
   public readonly code: YYC3ArchitectureError
   public readonly layer?: YYC3Layer
   public readonly timestamp: Date
-  public readonly context?: any
+  public readonly context?: unknown
   
   constructor(
     code: YYC3ArchitectureError,
     message: string,
     layer?: YYC3Layer,
-    context?: any
+    context?: unknown
   ) {
     super(message)
     this.name = 'YYC3ArchitectureException'
@@ -281,7 +281,7 @@ export class YYC3ArchitectureValidator {
   }
   
   // 验证接口合规性
-  validateInterface(interfaceDefinition: any): YYC3ComplianceIssue[] {
+  validateInterface(interfaceDefinition: unknown): YYC3ComplianceIssue[] {
     const issues: YYC3ComplianceIssue[] = []
     
     // 检查命名
@@ -355,7 +355,7 @@ export class YYC3ArchitectureFactory {
     code: YYC3ArchitectureError,
     message: string,
     layer?: YYC3Layer,
-    context?: any
+    context?: unknown
   ): YYC3ArchitectureException {
     return new YYC3ArchitectureException(code, message, layer, context)
   }
