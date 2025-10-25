@@ -6,6 +6,10 @@ on:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -69,3 +73,4 @@ jobs:
               ref: 'main',
               inputs: { image, host, strategy, canaryWeight, blueTarget }
             });
+      
