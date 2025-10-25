@@ -100,3 +100,25 @@
 - 蓝绿发布：将 Service `selector.version` 切回上一个版本（`blue|green`）
 - 金丝雀发布：将 `canary-weight` 调为 `0` 或删除 `canary ingress`
 - Argo Rollouts：`abort` 或 `rollback` 指定修订版本
+
+## 自动化链路（构建→推送→灰度发布）
+
+- 触发条件：推送符合语义版本的 Tag（例如 `v1.2.3`）。
+- 工作流顺序：
+  - `release.yml` 在 Tag 推送时自动创建 Release，并启用 `generate_release_notes` 生成版本说明；
+  - `docker.yml` 根据 Tag 构建并推送镜像到 `${REGISTRY}/${IMAGE_NAME}:${tag}`；
+  - `docker.yml` 成功推送后自动派发 `k8s-deploy.yml`，使用同一镜像 Tag 进行滚动/金丝雀/蓝绿发布。
+
+- 必需密钥（Secrets）：
+  - `REGISTRY`、`REGISTRY_USERNAME`、`REGISTRY_PASSWORD`、`IMAGE_NAME`
+  - `KUBE_CONFIG`（K8s 访问配置）
+  - `K8S_INGRESS_HOST`（Ingress Host，用于生成入口）
+  - 可选：`K8S_STRATEGY`（默认 `canary`）、`K8S_CANARY_WEIGHT`（默认 `10`）、`K8S_BLUE_TARGET`（默认 `blue`）
+
+- 使用方式：
+  - 推送 Tag：`git tag v1.2.3 && git push origin v1.2.3`
+  - 自动链路将按顺序执行（Release→镜像→部署）。如需手动部署，可通过 `k8s-deploy.yml` 的 `workflow_dispatch` 输入 `image`、`host`、`strategy`。
+
+- 注意事项：
+  - 仓库设置需开启 `Settings → Actions → General → Workflow permissions → Read and write permissions`，以允许工作流派发（`createWorkflowDispatch`）。
+  - 若未配置 `REGISTRY`/`IMAGE_NAME` 或 `KUBE_CONFIG`，自动派发部署步骤会被跳过，仍可手动触发部署。
